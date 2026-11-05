@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Smart Home Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Material+Symbols+Rounded:opsz,wght,FILL@24,400,0..1&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: { extend: {
+    fontFamily: { sans: ['Prompt','Noto Sans Thai','system-ui','sans-serif'], mono: ['JetBrains Mono','ui-monospace','monospace'] },
+    colors: {
+      bg:'var(--bg)', surf:'var(--surf)', surf2:'var(--surf2)', on:'var(--on)', on2:'var(--on2)', line:'var(--line)',
+      pri:'var(--pri)', onpri:'var(--onpri)', pric:'var(--pric)', onpric:'var(--onpric)',
+      rain:'var(--rain)', rainc:'var(--rainc)', warn:'var(--warn)', warnc:'var(--warnc)', err:'var(--err)', errc:'var(--errc)'
+    }
+  } }
+}
+</script>
+<style>
+:root{
+  --bg:#f3f8f6; --surf:#ffffff; --surf2:#e6f0ed; --on:#161d1b; --on2:#475350; --line:#c3cfcb;
+  --pri:#006b5f; --onpri:#ffffff; --pric:#b4efe3; --onpric:#00201c;
+  --rain:#2a5da8; --rainc:#d9e3ff; --warn:#8a5100; --warnc:#ffddb8; --err:#ba1a1a; --errc:#ffdad6;
+}
+.dark{
+  --bg:#0d1412; --surf:#151c1a; --surf2:#212927; --on:#dde5e2; --on2:#aebab6; --line:#3a4542;
+  --pri:#5bdac7; --onpri:#00372f; --pric:#00504a; --onpric:#b4efe3;
+  --rain:#aac7ff; --rainc:#10407f; --warn:#ffb867; --warnc:#4a2c00; --err:#ffb4ab; --errc:#8c1d18;
+}
+html{color-scheme:light} html.dark{color-scheme:dark}
+body{background:var(--bg);color:var(--on);font-family:Prompt,system-ui,sans-serif}
+.ms{font-family:'Material Symbols Rounded';font-weight:400;font-style:normal;font-size:24px;line-height:1;display:inline-block;font-variation-settings:'FILL' 0;user-select:none}
+.ms.fill{font-variation-settings:'FILL' 1}
+.num{font-variant-numeric:tabular-nums}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:24px}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:8px;padding:4px 12px;font-size:13px;font-weight:500}
+.seg button{padding:6px 16px;font-size:14px;border:1px solid var(--line);margin-left:-1px;color:var(--on2)}
+.seg button:first-child{border-radius:999px 0 0 999px;margin-left:0}
+.seg button:last-child{border-radius:0 999px 999px 0}
+.seg button.on{background:var(--pric);color:var(--onpric);font-weight:500}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;padding:10px 20px;font-size:14px;font-weight:500;transition:filter .15s,background .15s}
+.btn:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.btn-fill{background:var(--pri);color:var(--onpri)} .btn-fill:hover{filter:brightness(1.1)}
+.btn-tonal{background:var(--pric);color:var(--onpric)} .btn-tonal:hover{filter:brightness(.96)}
+.btn-out{border:1px solid var(--line);color:var(--pri)} .btn-out:hover{background:var(--surf2)}
+.field{background:var(--surf2);border:1px solid var(--line);border-radius:12px;padding:8px 12px;width:100%;font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--on)}
+input[type=range]{accent-color:var(--pri);width:100%}
+.sw{width:56px;height:32px;border-radius:999px;background:var(--surf2);border:2px solid var(--line);position:relative;transition:.2s;flex:none}
+.sw::after{content:"";position:absolute;top:4px;left:4px;width:20px;height:20px;border-radius:50%;background:var(--on2);transition:.2s}
+.sw[aria-checked=true]{background:var(--pri);border-color:var(--pri)}
+.sw[aria-checked=true]::after{left:28px;background:var(--onpri);width:20px;height:20px}
+.mode{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:16px;border:1px solid var(--line);font-size:12px;color:var(--on2);flex:1}
+.mode.on{background:var(--pric);color:var(--onpric);border-color:transparent;font-weight:500}
+.mode:disabled,.dis{opacity:.4;pointer-events:none}
+.raincell{height:28px;border-radius:4px;background:var(--surf2)} .raincell.w{background:var(--rain)}
+.pulse{animation:pulse 1.8s ease-in-out infinite} @keyframes pulse{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.pulse{animation:none}*{transition:none!important}}
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- Top app bar -->
+<header class="sticky top-0 z-20 border-b border-line" style="background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px)">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-3">
+    <span class="ms fill text-pri" style="font-size:28px">home_iot_device</span>
+    <div class="min-w-0">
+      <h1 class="text-lg font-medium leading-tight truncate">Smart Home Monitor</h1>
+      <p class="text-xs text-on2 leading-tight">ห้องนอน · อัปเดตล่าสุด <span id="lastUpd" class="num font-mono">--:--:--</span></p>
+    </div>
+    <div class="ml-auto flex items-center gap-2">
+      <span id="conn" class="chip bg-pric text-onpric hidden sm:inline-flex"><span class="w-2 h-2 rounded-full bg-pri pulse"></span>เชื่อมต่อ (ข้อมูลจำลอง)</span>
+      <button id="themeBtn" class="w-10 h-10 rounded-full hover:bg-surf2 grid place-items-center" aria-label="สลับธีม"><span class="ms" id="themeIco">dark_mode</span></button>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+  <!-- Summary row -->
+  <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" aria-label="สรุปตอนนี้">
+    <div class="card p-4 sm:p-5">
+      <div class="flex items-center gap-2 text-on2 text-sm"><span class="ms text-pri">bolt</span>กำลังไฟตอนนี้</div>
+      <div class="mt-3 flex items-baseline gap-1.5"><span id="kW" class="text-3xl sm:text-4xl font-medium num">0</span><span class="text-on2">W</span></div>
+      <div class="mt-1 text-xs text-on2 num"><span id="amps">0.00</span> A · <span id="volt">230</span> V · PF <span id="pf">0.95</span></div>
+    </div>
+    <div class="card p-4 sm:p-5">
+      <div class="flex items-center gap-2 text-on2 text-sm"><span class="ms text-pri">payments</span>ค่าไฟเดือนนี้ (คาด)</div>
+      <div class="mt-3 flex items-baseline gap-1.5"><span class="text-on2">฿</span><span id="topBill" class="text-3xl sm:text-4xl font-medium num">0</span></div>
+      <div class="mt-1 text-xs text-on2 num">สะสม <span id="topKwh">0</span> kWh · วันนี้ <span id="todayKwh">0</span> kWh</div>
+    </div>
+    <div class="card p-4 sm:p-5">
+      <div class="flex items-center gap-2 text-on2 text-sm"><span class="ms text-pri">device_thermostat</span>อุณหภูมิห้อง</div>
+      <div class="mt-3 flex items-baseline gap-1.5"><span id="tNow" class="text-3xl sm:text-4xl font-medium num">0</span><span class="text-on2">°C</span></div>
+      <div class="mt-1 text-xs text-on2 num">ความชื้น <span id="hNow">0</span>% · <span id="tState">—</span></div>
+    </div>
+    <div class="card p-4 sm:p-5" id="rainTop">
+      <div class="flex items-center gap-2 text-on2 text-sm"><span class="ms text-rain">rainy</span>เซนเซอร์ฝน</div>
+      <div class="mt-3"><span id="rainChip" class="chip bg-surf2 text-on2">—</span></div>
+      <div class="mt-2 text-xs text-on2">ล่าสุด <span id="rainLast">—</span></div>
+    </div>
+  </section>
+
+  <!-- Power usage + summary/export -->
+  <section class="grid lg:grid-cols-3 gap-4">
+    <div class="card p-5 lg:col-span-2">
+      <div class="flex flex-wrap items-center gap-3 mb-1">
+        <div><h2 class="text-base font-medium">การใช้ไฟฟ้า</h2><p class="text-xs text-on2">หน่วย kWh ต่อช่วงเวลา</p></div>
+        <div class="seg ml-auto flex" id="rangeSeg" role="group" aria-label="ช่วงเวลา">
+          <button data-r="24h" class="on">24 ชม.</button><button data-r="7d">7 วัน</button><button data-r="30d">30 วัน</button>
+        </div>
+      </div>
+      <div class="relative h-64 sm:h-72"><canvas id="usageChart" aria-label="กราฟการใช้ไฟฟ้า"></canvas></div>
+    </div>
+
+    <div class="card p-5 flex flex-col">
+      <h2 class="text-base font-medium">สรุปช่วงที่เลือก</h2>
+      <p class="text-xs text-on2 mb-4" id="sumRangeLbl">24 ชั่วโมงล่าสุด</p>
+      <dl class="grid grid-cols-2 gap-x-4 gap-y-4">
+        <div><dt class="text-xs text-on2">ใช้ไปทั้งหมด</dt><dd class="text-2xl font-medium num"><span id="sTot">0</span> <span class="text-sm text-on2 font-normal">kWh</span></dd></div>
+        <div><dt class="text-xs text-on2">ค่าไฟโดยประมาณ</dt><dd class="text-2xl font-medium num"><span class="text-sm text-on2 font-normal">฿</span><span id="sCost">0</span></dd></div>
+        <div><dt class="text-xs text-on2">สูงสุด</dt><dd class="text-lg num"><span id="sPeak">0</span> <span class="text-xs text-on2">kWh</span></dd><dd class="text-xs text-on2" id="sPeakAt">—</dd></div>
+        <div><dt class="text-xs text-on2">เฉลี่ย</dt><dd class="text-lg num"><span id="sAvg">0</span> <span class="text-xs text-on2">kWh/ช่วง</span></dd></div>
+      </dl>
+      <div class="mt-auto pt-5 flex flex-wrap gap-2">
+        <button class="btn btn-fill flex-1" id="expCsv"><span class="ms" style="font-size:20px">download</span>Export CSV</button>
+        <button class="btn btn-out" id="expJson"><span class="ms" style="font-size:20px">data_object</span>JSON</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bill calculator + AC -->
+  <section class="grid lg:grid-cols-3 gap-4">
+    <div class="card p-5 lg:col-span-2">
+      <div class="flex items-center gap-2 mb-1"><span class="ms text-pri">receipt_long</span><h2 class="text-base font-medium">คำนวณค่าไฟ</h2></div>
+      <p class="text-xs text-on2 mb-4">อัตราก้าวหน้า บ้านอยู่อาศัย (ใช้เกิน 150 หน่วย/เดือน) · แก้ค่าได้ให้ตรงกับบิลจริง</p>
+      <div class="grid sm:grid-cols-2 gap-6">
+        <div>
+          <div class="flex gap-3">
+            <label class="flex-1 text-xs text-on2">ค่า Ft (บาท/หน่วย)<input id="ft" class="field mt-1" type="number" step="0.0001" value="0.3972"></label>
+            <label class="flex-1 text-xs text-on2">ค่าบริการ (บาท)<input id="svc" class="field mt-1" type="number" step="0.01" value="24.62"></label>
+          </div>
+          <label class="block mt-3 text-xs text-on2">ภาษีมูลค่าเพิ่ม (%)<input id="vat" class="field mt-1" type="number" step="0.5" value="7"></label>
+          <div class="mt-4 rounded-2xl bg-pric text-onpric p-4">
+            <div class="text-xs opacity-80">ประมาณการสิ้นเดือน (<span id="projKwh" class="num">0</span> kWh)</div>
+            <div class="text-3xl font-medium num mt-1">฿ <span id="projBill">0</span></div>
+            <div class="text-xs opacity-80 mt-1 num">ถึงวันนี้ ฿<span id="mtdBill">0</span> · เฉลี่ย <span id="effRate">0</span> บาท/หน่วย</div>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm num" id="tierTbl">
+            <thead><tr class="text-xs text-on2 text-left border-b border-line"><th class="py-2 font-normal">ช่วงหน่วย</th><th class="font-normal text-right">หน่วย</th><th class="font-normal text-right">บาท/หน่วย</th><th class="font-normal text-right">บาท</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- AC control -->
+    <div class="card p-5" id="acCard">
+      <div class="flex items-center gap-2">
+        <span class="ms fill text-pri">ac_unit</span><h2 class="text-base font-medium">แอร์</h2>
+        <span id="acChip" class="chip bg-surf2 text-on2 ml-auto">ปิด</span>
+      </div>
+      <div class="flex items-center justify-between mt-4">
+        <span class="text-sm">เปิด / ปิดเครื่อง</span>
+        <button id="acSw" class="sw" role="switch" aria-checked="false" aria-label="เปิดปิดแอร์"></button>
+      </div>
+      <div id="acBody" class="dis mt-5">
+        <div class="flex items-center justify-between">
+          <button class="w-12 h-12 rounded-full bg-surf2 grid place-items-center hover:brightness-95" id="tDown" aria-label="ลดอุณหภูมิ"><span class="ms">remove</span></button>
+          <div class="text-center"><div class="text-5xl font-medium num"><span id="acSet">25</span><span class="text-2xl text-on2">°C</span></div><div class="text-xs text-on2">ตั้งอุณหภูมิ</div></div>
+          <button class="w-12 h-12 rounded-full bg-surf2 grid place-items-center hover:brightness-95" id="tUp" aria-label="เพิ่มอุณหภูมิ"><span class="ms">add</span></button>
+        </div>
+        <input type="range" id="acRange" min="16" max="30" value="25" class="mt-4" aria-label="อุณหภูมิ">
+        <div class="flex gap-2 mt-4" id="modes">
+          <button class="mode on" data-m="cool"><span class="ms">ac_unit</span>เย็น</button>
+          <button class="mode" data-m="dry"><span class="ms">water_drop</span>ลดชื้น</button>
+          <button class="mode" data-m="fan"><span class="ms">mode_fan</span>พัดลม</button>
+          <button class="mode" data-m="auto"><span class="ms">auto_mode</span>อัตโนมัติ</button>
+        </div>
+        <div class="flex items-center gap-3 mt-4"><span class="text-xs text-on2 w-14">แรงลม</span>
+          <div class="seg flex flex-1" id="fans"><button data-f="1" class="flex-1">ต่ำ</button><button data-f="2" class="flex-1 on">กลาง</button><button data-f="3" class="flex-1">สูง</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Temp chart + rain -->
+  <section class="grid lg:grid-cols-3 gap-4">
+    <div class="card p-5 lg:col-span-2">
+      <div class="flex items-center gap-2 mb-1"><span class="ms text-pri">thermostat</span><h2 class="text-base font-medium">อุณหภูมิและความชื้น 24 ชม.</h2></div>
+      <div class="relative h-56 sm:h-64"><canvas id="tempChart" aria-label="กราฟอุณหภูมิ"></canvas></div>
+    </div>
+    <div class="card p-5" id="rainCard">
+      <div class="flex items-center gap-2 mb-4"><span class="ms fill text-rain" id="rainIco">cloud</span><h2 class="text-base font-medium">สถานะฝน</h2></div>
+      <div class="text-3xl font-medium" id="rainTitle">—</div>
+      <p class="text-sm text-on2 mt-1" id="rainSub">—</p>
+      <div class="mt-5"><div class="flex justify-between text-xs text-on2 mb-1"><span>ค่าความเปียกของเซนเซอร์</span><span class="num"><span id="wet">0</span>%</span></div>
+        <div class="h-2 rounded-full bg-surf2 overflow-hidden"><div id="wetBar" class="h-full bg-rain transition-all" style="width:0%"></div></div></div>
+      <div class="mt-5 text-xs text-on2 mb-2">ฝนตกใน 24 ชม. (1 ช่อง = 1 ชม.)</div>
+      <div class="grid gap-[3px]" style="grid-template-columns:repeat(24,1fr)" id="rainGrid"></div>
+      <div class="flex justify-between text-[11px] text-on2 mt-1 num"><span>-24</span><span>-12</span><span>ตอนนี้</span></div>
+      <p class="text-xs text-on2 mt-4">ฝนตกรวม <span id="rainHrs" class="num">0</span> ชม. ใน 24 ชม.ล่าสุด</p>
+    </div>
+  </section>
+
+  <footer class="text-xs text-on2 pb-6">ข้อมูลในหน้านี้เป็นค่าจำลอง ผูกกับอุปกรณ์จริงที่ออบเจ็กต์ <span class="font-mono">Api</span> ในสคริปต์ด้านล่าง</footer>
+</main>
+
+<div id="toast" class="fixed left-1/2 -translate-x-1/2 bottom-6 z-30 bg-on text-bg px-4 py-3 rounded-xl text-sm shadow-lg opacity-0 pointer-events-none transition-opacity"></div>
+
+<script>
+/* ============ Api: แทนที่ด้วย MQTT / REST / WebSocket ของคุณ ============
+   - getHistory(): [{t:ms, kwh, temp, hum}] รายชั่วโมงย้อนหลัง 30 วัน
+   - subscribe(cb): เรียก cb({watts, volts, amps, pf, temp, hum, rainWet, raining}) ทุกครั้งที่ได้ค่าใหม่
+   - sendAC(state): ส่งคำสั่งแอร์ {on, set, mode, fan}
+*/
+const Api = {
+  _hist: null,
+  getHistory() {
+    if (this._hist) return this._hist;
+    const H = 3600e3, end = Math.floor(Date.now() / H) * H, out = [];
+    let s = 7; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    for (let i = 719; i >= 0; i--) {
+      const t = end - i * H, d = new Date(t), h = d.getHours();
+      const night = h >= 21 || h < 6, eve = h >= 17 && h < 21, noon = h >= 12 && h < 16;
+      const kwh = 0.08 + (night ? 0.55 : 0) + (eve ? 0.3 : 0) + (noon ? 0.15 : 0) + r() * 0.12;
+      const outdoor = 27 + 6 * Math.sin((h - 9) / 24 * 2 * Math.PI);
+      const temp = night ? 25 + r() * 1.2 : outdoor + r() * 0.8;
+      out.push({ t, kwh: +kwh.toFixed(3), temp: +temp.toFixed(1), hum: Math.round(62 + r() * 12 - (noon ? 8 : 0)) });
+    }
+    return (this._hist = out);
+  },
+  subscribe(cb) {
+    let temp = 28.4, hum = 64, wet = 4, raining = false, ac = null;
+    this._acRef = s => (ac = s);
+    const tick = () => {
+      const target = ac && ac.on ? ac.set : 30;
+      temp += (target - temp) * (ac && ac.on ? 0.06 : 0.01) + (Math.random() - .5) * 0.1;
+      hum += (Math.random() - .5) * 0.8; hum = Math.max(45, Math.min(85, hum));
+      if (Math.random() < 0.03) raining = !raining;
+      wet += raining ? 9 : -5; wet = Math.max(2, Math.min(96, wet));
+      const watts = ac && ac.on ? (ac.mode === 'fan' ? 70 : 520 + (temp - ac.set) * 90 + (ac.fan * 40)) : 55;
+      const volts = 229 + Math.random() * 3, pf = ac && ac.on ? 0.92 : 0.8;
+      const w = Math.max(30, watts + (Math.random() - .5) * 30);
+      cb({ watts: w, volts, amps: w / (volts * pf), pf, temp, hum, rainWet: wet, raining });
+    };
+    tick(); return setInterval(tick, 2500);
+  },
+  sendAC(state) { console.log('sendAC', state); if (this._acRef) this._acRef(state); /* เช่น mqtt.publish('home/ac/cmd', JSON.stringify(state)) */ }
+};
+
+/* ============ Utilities ============ */
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const f = (n, d = 0) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: d, maximumFractionDigits: d });
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const toast = m => { const e = $('#toast'); e.textContent = m; e.style.opacity = 1; clearTimeout(toast._t); toast._t = setTimeout(() => e.style.opacity = 0, 2200); };
+
+/* ============ Theme ============ */
+const setTheme = d => { document.documentElement.classList.toggle('dark', d); $('#themeIco').textContent = d ? 'light_mode' : 'dark_mode'; try { localStorage.setItem('theme', d ? 'd' : 'l'); } catch (e) {} drawCharts(); };
+$('#themeBtn').onclick = () => setTheme(!document.documentElement.classList.contains('dark'));
+let pref = null; try { pref = localStorage.getItem('theme'); } catch (e) {}
+document.documentElement.classList.toggle('dark', pref ? pref === 'd' : matchMedia('(prefers-color-scheme:dark)').matches);
+$('#themeIco').textContent = document.documentElement.classList.contains('dark') ? 'light_mode' : 'dark_mode';
+
+/* ============ Electricity bill ============ */
+const TIERS = [[15, 2.3488], [10, 2.9882], [10, 3.2405], [65, 3.6237], [50, 3.7171], [250, 4.2218], [Infinity, 4.4217]];
+function bill(kwh) {
+  const ft = +$('#ft').value || 0, svc = +$('#svc').value || 0, vat = (+$('#vat').value || 0) / 100;
+  let left = kwh, from = 1, rows = [], energy = 0;
+  for (const [size, rate] of TIERS) {
+    const u = Math.min(left, size);
+    rows.push({ from, to: size === Infinity ? null : from + size - 1, u, rate, amt: u * rate });
+    energy += u * rate; left -= u; from += size; if (left <= 0) break;
+  }
+  const ftAmt = kwh * ft, sub = energy + ftAmt + svc, total = sub * (1 + vat);
+  return { rows, energy, ftAmt, svc, vat: sub * vat, total };
+}
+
+/* ============ Data helpers ============ */
+let hist = Api.getHistory(), range = '24h';
+function series(r) {
+  const H = hist;
+  if (r === '24h') { const a = H.slice(-24); return { labels: a.map(x => new Date(x.t).getHours() + ':00'), vals: a.map(x => x.kwh), times: a.map(x => x.t), unit: 'ชม.' }; }
+  const days = r === '7d' ? 7 : 30, map = new Map();
+  H.forEach(x => { const k = new Date(x.t).toDateString(); map.set(k, (map.get(k) || 0) + x.kwh); });
+  const a = [...map.entries()].slice(-days);
+  return { labels: a.map(([k]) => new Date(k).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })), vals: a.map(([, v]) => +v.toFixed(2)), times: a.map(([k]) => new Date(k).getTime()), unit: 'วัน' };
+}
+const monthData = () => { const n = new Date(); return hist.filter(x => { const d = new Date(x.t); return d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear(); }); };
+
+/* ============ Charts ============ */
+let uChart, tChart;
+function drawCharts() {
+  const pri = css('--pri'), on2 = css('--on2'), line = css('--line'), rain = css('--rain');
+  Chart.defaults.font.family = 'Prompt, sans-serif'; Chart.defaults.color = on2;
+  const s = series(range);
+  uChart && uChart.destroy(); tChart && tChart.destroy();
+  uChart = new Chart($('#usageChart'), {
+    type: 'bar',
+    data: { labels: s.labels, datasets: [{ data: s.vals, backgroundColor: pri, borderRadius: 4, borderSkipped: 'bottom', maxBarThickness: 22 }] },
+    options: { maintainAspectRatio: false, animation: { duration: 300 },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${f(c.parsed.y, 2)} kWh · ฿${f(c.parsed.y * bill(300).total / 300, 2)}` } } },
+      scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: range === '30d' ? 8 : 12, maxRotation: 0 } }, y: { beginAtZero: true, grid: { color: line }, border: { display: false }, title: { display: true, text: 'kWh' } } } }
+  });
+  const t = hist.slice(-24);
+  tChart = new Chart($('#tempChart'), {
+    type: 'line',
+    data: { labels: t.map(x => new Date(x.t).getHours() + ':00'), datasets: [
+      { label: 'อุณหภูมิ (°C)', data: t.map(x => x.temp), borderColor: pri, backgroundColor: pri + '22', fill: true, tension: .35, pointRadius: 0, pointHoverRadius: 5, borderWidth: 2, yAxisID: 'y' },
+      { label: 'ความชื้น (%)', data: t.map(x => x.hum), borderColor: rain, borderDash: [5, 4], tension: .35, pointRadius: 0, pointHoverRadius: 5, borderWidth: 2, yAxisID: 'y1' }] },
+    options: { maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, animation: { duration: 300 },
+      plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } } },
+      scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 8, maxRotation: 0 } },
+        y: { grid: { color: line }, border: { display: false }, title: { display: true, text: '°C' } },
+        y1: { position: 'right', grid: { display: false }, border: { display: false }, title: { display: true, text: '%' } } } }
+  });
+  renderSummary();
+}
+
+/* ============ Summary / export ============ */
+let cur = { s: null };
+function renderSummary() {
+  const s = series(range); cur.s = s;
+  const tot = s.vals.reduce((a, b) => a + b, 0), max = Math.max(...s.vals), i = s.vals.indexOf(max);
+  const monthKwh = monthData().reduce((a, x) => a + x.kwh, 0);
+  // ค่าไฟของช่วง: ใช้ค่าเฉลี่ยต่อหน่วยจากบิลประมาณการเดือน เพื่อให้เทียบกันได้
+  const rate = bill(Math.max(monthKwh, 1)).total / Math.max(monthKwh, 1);
+  $('#sTot').textContent = f(tot, 1); $('#sCost').textContent = f(tot * rate, 0);
+  $('#sPeak').textContent = f(max, 2); $('#sAvg').textContent = f(tot / s.vals.length, 2);
+  $('#sPeakAt').textContent = 'ที่ ' + s.labels[i];
+  $('#sumRangeLbl').textContent = { '24h': '24 ชั่วโมงล่าสุด', '7d': '7 วันล่าสุด', '30d': '30 วันล่าสุด' }[range];
+  cur.rate = rate;
+}
+$$('#rangeSeg button').forEach(b => b.onclick = () => { $$('#rangeSeg button').forEach(x => x.classList.remove('on')); b.classList.add('on'); range = b.dataset.r; drawCharts(); });
+function download(name, mime, text) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + text], { type: mime })); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  toast('ดาวน์โหลด ' + name);
+}
+const rowsOut = () => { const s = cur.s; return s.vals.map((v, i) => ({ time: new Date(s.times[i]).toISOString(), label: s.labels[i], kwh: v, est_cost_thb: +(v * cur.rate).toFixed(2) })); };
+$('#expCsv').onclick = () => { const r = rowsOut(); download(`power-${range}-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv;charset=utf-8', 'time,label,kwh,est_cost_thb\n' + r.map(x => `${x.time},${x.label},${x.kwh},${x.est_cost_thb}`).join('\n')); };
+$('#expJson').onclick = () => download(`power-${range}.json`, 'application/json', JSON.stringify(rowsOut(), null, 2));
+
+/* ============ Bill render ============ */
+function renderBill() {
+  const m = monthData(), kwh = m.reduce((a, x) => a + x.kwh, 0), n = new Date();
+  const dim = new Date(n.getFullYear(), n.getMonth() + 1, 0).getDate();
+  const elapsed = (n.getDate() - 1) + (n.getHours() + 1) / 24, proj = kwh / elapsed * dim;
+  const b = bill(proj), mtd = bill(kwh);
+  $('#projKwh').textContent = f(proj, 0); $('#projBill').textContent = f(b.total, 2); $('#mtdBill').textContent = f(mtd.total, 0);
+  $('#effRate').textContent = f(b.total / Math.max(proj, 1), 2);
+  $('#topBill').textContent = f(b.total, 0); $('#topKwh').textContent = f(kwh, 1);
+  const today = hist.filter(x => new Date(x.t).toDateString() === n.toDateString()).reduce((a, x) => a + x.kwh, 0);
+  $('#todayKwh').textContent = f(today, 1);
+  const rows = b.rows.map(r => `<tr class="border-b border-line/60"><td class="py-1.5">${r.from}–${r.to ?? '∞'}</td><td class="text-right">${f(r.u, 1)}</td><td class="text-right">${f(r.rate, 4)}</td><td class="text-right">${f(r.amt, 2)}</td></tr>`).join('') +
+    `<tr class="border-b border-line/60 text-on2"><td class="py-1.5" colspan="3">ค่า Ft</td><td class="text-right">${f(b.ftAmt, 2)}</td></tr>
+     <tr class="border-b border-line/60 text-on2"><td class="py-1.5" colspan="3">ค่าบริการ</td><td class="text-right">${f(b.svc, 2)}</td></tr>
+     <tr class="border-b border-line/60 text-on2"><td class="py-1.5" colspan="3">VAT</td><td class="text-right">${f(b.vat, 2)}</td></tr>
+     <tr class="font-medium"><td class="py-2" colspan="3">รวม</td><td class="text-right text-pri">${f(b.total, 2)}</td></tr>`;
+  $('#tierTbl tbody').innerHTML = rows;
+  renderSummary();
+}
+['#ft', '#svc', '#vat'].forEach(s => $(s).addEventListener('input', renderBill));
+
+/* ============ AC ============ */
+const ac = { on: false, set: 25, mode: 'cool', fan: 2 };
+function renderAC() {
+  $('#acSw').setAttribute('aria-checked', ac.on); $('#acBody').classList.toggle('dis', !ac.on);
+  $('#acSet').textContent = ac.set; $('#acRange').value = ac.set;
+  const c = $('#acChip'); c.textContent = ac.on ? ({ cool: 'กำลังทำความเย็น', dry: 'ลดความชื้น', fan: 'พัดลม', auto: 'อัตโนมัติ' }[ac.mode]) : 'ปิด';
+  c.className = 'chip ml-auto ' + (ac.on ? 'bg-pric text-onpric' : 'bg-surf2 text-on2');
+  $$('#modes .mode').forEach(b => b.classList.toggle('on', b.dataset.m === ac.mode));
+  $$('#fans button').forEach(b => b.classList.toggle('on', +b.dataset.f === ac.fan));
+}
+function pushAC(msg) { renderAC(); Api.sendAC({ ...ac }); if (msg) toast(msg); }
+$('#acSw').onclick = () => { ac.on = !ac.on; pushAC(ac.on ? 'เปิดแอร์แล้ว' : 'ปิดแอร์แล้ว'); };
+$('#tUp').onclick = () => { ac.set = Math.min(30, ac.set + 1); pushAC(); };
+$('#tDown').onclick = () => { ac.set = Math.max(16, ac.set - 1); pushAC(); };
+$('#acRange').oninput = e => { ac.set = +e.target.value; pushAC(); };
+$$('#modes .mode').forEach(b => b.onclick = () => { ac.mode = b.dataset.m; pushAC(); });
+$$('#fans button').forEach(b => b.onclick = () => { ac.fan = +b.dataset.f; pushAC(); });
+
+/* ============ Rain ============ */
+const rainHist = Array.from({ length: 24 }, (_, i) => (i > 3 && i < 7) || i === 15 || i === 16 ? 1 : 0);
+let wasRaining = null, lastRain = '08:40 น.';
+$('#rainGrid').innerHTML = rainHist.map(() => '<div class="raincell"></div>').join('');
+function renderRain(d) {
+  if (wasRaining === true && !d.raining) lastRain = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
+  if (d.raining) { lastRain = 'ตอนนี้'; rainHist[23] = 1; } else if (wasRaining !== null && wasRaining !== d.raining) {}
+  wasRaining = d.raining;
+  const wet = Math.round(d.rainWet);
+  $('#wet').textContent = wet; $('#wetBar').style.width = wet + '%';
+  $('#rainTitle').textContent = d.raining ? 'ฝนกำลังตก' : wet > 25 ? 'พื้นยังเปียก' : 'ไม่มีฝน';
+  $('#rainSub').textContent = d.raining ? 'ควรเก็บของที่ระเบียงและปิดหน้าต่าง' : 'ท้องฟ้าปลอดฝนตามเซนเซอร์';
+  $('#rainIco').textContent = d.raining ? 'rainy' : 'cloud';
+  const chip = $('#rainChip'); chip.className = 'chip ' + (d.raining ? 'bg-rainc text-rain' : 'bg-pric text-onpric');
+  chip.innerHTML = `<span class="ms fill" style="font-size:18px">${d.raining ? 'water_drop' : 'check_circle'}</span>${d.raining ? 'ฝนตก' : 'ไม่มีฝน'}`;
+  $('#rainLast').textContent = lastRain;
+  $$('#rainGrid .raincell').forEach((c, i) => c.classList.toggle('w', !!rainHist[i]));
+  $('#rainHrs').textContent = rainHist.reduce((a, b) => a + b, 0);
+}
+
+/* ============ Live ============ */
+function onData(d) {
+  $('#kW').textContent = f(d.watts, 0); $('#amps').textContent = f(d.amps, 2); $('#volt').textContent = f(d.volts, 0); $('#pf').textContent = f(d.pf, 2);
+  $('#tNow').textContent = f(d.temp, 1); $('#hNow').textContent = f(d.hum, 0);
+  $('#tState').textContent = d.temp > 29 ? 'ร้อน' : d.temp > 26 ? 'อุ่น' : 'สบาย';
+  $('#lastUpd').textContent = new Date().toLocaleTimeString('th-TH', { hour12: false });
+  renderRain(d);
+}
+renderAC(); renderBill(); drawCharts();
+Api.subscribe(onData);
+</script>
+</body>
+</html>
