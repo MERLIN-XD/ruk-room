@@ -1,8 +1,5 @@
-<!doctype html>
-<html lang="th">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<meta name="claude:viewport-fit-sides" content="cover">
 <title>Smart Home Monitor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -10,412 +7,608 @@
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-tailwind.config = {
-  darkMode: 'class',
-  theme: { extend: {
-    fontFamily: { sans: ['Prompt','Noto Sans Thai','system-ui','sans-serif'], mono: ['JetBrains Mono','ui-monospace','monospace'] },
-    colors: {
-      bg:'var(--bg)', surf:'var(--surf)', surf2:'var(--surf2)', on:'var(--on)', on2:'var(--on2)', line:'var(--line)',
-      pri:'var(--pri)', onpri:'var(--onpri)', pric:'var(--pric)', onpric:'var(--onpric)',
-      rain:'var(--rain)', rainc:'var(--rainc)', warn:'var(--warn)', warnc:'var(--warnc)', err:'var(--err)', errc:'var(--errc)'
-    }
-  } }
-}
+const _names=['bg','surf','surf2','on','on2','line','pri','onpri','pric','onpric','grn','ongrn','grnc','ongrnc','pnk','onpnk','pnkc','onpnkc','pur','onpur','purc','onpurc','warn','warnc','err','errc','lamp','lampc'];
+tailwind.config={theme:{extend:{fontFamily:{sans:['Prompt','Noto Sans Thai','system-ui','sans-serif'],mono:['JetBrains Mono','ui-monospace','monospace']},colors:Object.fromEntries(_names.map(n=>[n,'var(--'+n+')']))}}};
 </script>
 <style>
+/* Layout: sidebar rail on desktop, bottom navigation on phone. Blue leads; green, pink and purple tag rooms and series. */
 :root{
-  --bg:#f3f8f6; --surf:#ffffff; --surf2:#e6f0ed; --on:#161d1b; --on2:#475350; --line:#c3cfcb;
-  --pri:#006b5f; --onpri:#ffffff; --pric:#b4efe3; --onpric:#00201c;
-  --rain:#2a5da8; --rainc:#d9e3ff; --warn:#8a5100; --warnc:#ffddb8; --err:#ba1a1a; --errc:#ffdad6;
+  --bg:#f3f6ff;--surf:#ffffff;--surf2:#e7edfb;--on:#171b26;--on2:#454c5f;--line:#c9d0e2;
+  --pri:#0a5bd3;--onpri:#ffffff;--pric:#d6e3ff;--onpric:#001b3f;
+  --grn:#16703a;--ongrn:#ffffff;--grnc:#b7f0c3;--ongrnc:#00210c;
+  --pnk:#b0306b;--onpnk:#ffffff;--pnkc:#ffd9e6;--onpnkc:#3e001f;
+  --pur:#6b47c0;--onpur:#ffffff;--purc:#e8deff;--onpurc:#22005d;
+  --warn:#8a5100;--warnc:#ffddb8;--err:#ba1a1a;--errc:#ffdad6;--lamp:#c26a00;--lampc:#ffe2b3;
+  --s1:#1a5fd1;--s2:#1b8a4a;--s3:#7c4dcc;--s4:#d6336c;
 }
-.dark{
-  --bg:#0d1412; --surf:#151c1a; --surf2:#212927; --on:#dde5e2; --on2:#aebab6; --line:#3a4542;
-  --pri:#5bdac7; --onpri:#00372f; --pric:#00504a; --onpric:#b4efe3;
-  --rain:#aac7ff; --rainc:#10407f; --warn:#ffb867; --warnc:#4a2c00; --err:#ffb4ab; --errc:#8c1d18;
-}
-html{color-scheme:light} html.dark{color-scheme:dark}
-body{background:var(--bg);color:var(--on);font-family:Prompt,system-ui,sans-serif}
-.ms{font-family:'Material Symbols Rounded';font-weight:400;font-style:normal;font-size:24px;line-height:1;display:inline-block;font-variation-settings:'FILL' 0;user-select:none}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1220;--surf:#161b2c;--surf2:#222a40;--on:#e4e8f4;--on2:#adb5cc;--line:#384159;
+  --pri:#a9c7ff;--onpri:#00306e;--pric:#1b4a99;--onpric:#d6e3ff;
+  --grn:#8fd9a0;--ongrn:#00391a;--grnc:#14532b;--ongrnc:#b7f0c3;
+  --pnk:#ffb0cf;--onpnk:#5e0b36;--pnkc:#7a1f4a;--onpnkc:#ffd9e6;
+  --pur:#cfbdff;--onpur:#381a8a;--purc:#50309d;--onpurc:#e8deff;
+  --warn:#ffb867;--warnc:#4a2c00;--err:#ffb4ab;--errc:#8c1d18;--lamp:#ffb74d;--lampc:#5a3500;
+  --s1:#5a8bee;--s2:#36a262;--s3:#8f6de4;--s4:#e65d8c;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1220;--surf:#161b2c;--surf2:#222a40;--on:#e4e8f4;--on2:#adb5cc;--line:#384159;
+  --pri:#a9c7ff;--onpri:#00306e;--pric:#1b4a99;--onpric:#d6e3ff;
+  --grn:#8fd9a0;--ongrn:#00391a;--grnc:#14532b;--ongrnc:#b7f0c3;
+  --pnk:#ffb0cf;--onpnk:#5e0b36;--pnkc:#7a1f4a;--onpnkc:#ffd9e6;
+  --pur:#cfbdff;--onpur:#381a8a;--purc:#50309d;--onpurc:#e8deff;
+  --warn:#ffb867;--warnc:#4a2c00;--err:#ffb4ab;--errc:#8c1d18;--lamp:#ffb74d;--lampc:#5a3500;
+  --s1:#5a8bee;--s2:#36a262;--s3:#8f6de4;--s4:#e65d8c;color-scheme:dark}
+body{background:var(--bg);color:var(--on);font-family:Prompt,'Noto Sans Thai',system-ui,sans-serif;font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--bg)}
+.ms{font-family:'Material Symbols Rounded';font-weight:400;font-style:normal;font-size:24px;line-height:1;display:inline-block;font-variation-settings:'FILL' 0;user-select:none;flex:none}
 .ms.fill{font-variation-settings:'FILL' 1}
 .num{font-variant-numeric:tabular-nums}
-.card{background:var(--surf);border:1px solid var(--line);border-radius:24px}
-.chip{display:inline-flex;align-items:center;gap:6px;border-radius:8px;padding:4px 12px;font-size:13px;font-weight:500}
-.seg button{padding:6px 16px;font-size:14px;border:1px solid var(--line);margin-left:-1px;color:var(--on2)}
-.seg button:first-child{border-radius:999px 0 0 999px;margin-left:0}
-.seg button:last-child{border-radius:0 999px 999px 0}
-.seg button.on{background:var(--pric);color:var(--onpric);font-weight:500}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;padding:10px 20px;font-size:14px;font-weight:500;transition:filter .15s,background .15s}
-.btn:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
-.btn-fill{background:var(--pri);color:var(--onpri)} .btn-fill:hover{filter:brightness(1.1)}
-.btn-tonal{background:var(--pric);color:var(--onpric)} .btn-tonal:hover{filter:brightness(.96)}
-.btn-out{border:1px solid var(--line);color:var(--pri)} .btn-out:hover{background:var(--surf2)}
-.field{background:var(--surf2);border:1px solid var(--line);border-radius:12px;padding:8px 12px;width:100%;font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--on)}
-input[type=range]{accent-color:var(--pri);width:100%}
-.sw{width:56px;height:32px;border-radius:999px;background:var(--surf2);border:2px solid var(--line);position:relative;transition:.2s;flex:none}
-.sw::after{content:"";position:absolute;top:4px;left:4px;width:20px;height:20px;border-radius:50%;background:var(--on2);transition:.2s}
+[hidden]{display:none!important}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+
+.shell{display:flex;gap:28px;max-width:1280px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.col{flex:1;min-width:0}
+.rail{display:none}
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--bg);border-bottom:1px solid var(--line);margin:0 -16px;padding:10px 16px;display:flex;align-items:center;gap:12px}
+#view{padding-block:20px 120px}
+.bottom{position:fixed;left:0;right:0;bottom:0;z-index:35;background:var(--surf);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:8px max(8px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
+.bn{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;color:var(--on2);min-width:60px;flex:1}
+.bn .pill{width:56px;height:30px;border-radius:999px;display:grid;place-items:center;transition:background .2s}
+.bn.on{color:var(--on);font-weight:500}.bn.on .pill{background:var(--pric);color:var(--onpric)}
+.rn{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:999px;color:var(--on2);font-weight:400}
+.rn:hover{background:var(--surf2)}.rn.on{background:var(--pric);color:var(--onpric);font-weight:500}
+@media (min-width:1024px){
+  .rail{display:flex;flex-direction:column;gap:6px;width:232px;flex:none;position:sticky;top:env(safe-area-inset-top,0px);align-self:flex-start;padding-block:20px;max-height:100vh}
+  .bottom{display:none}.topbar{margin:0;padding-left:0;padding-right:0}#view{padding-bottom:64px}
+}
+
+.card{background:var(--surf);border:1px solid var(--line);border-radius:20px;padding:16px}
+.tile{background:var(--surf2);border-radius:14px;padding:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:8px;padding:3px 10px;font-size:12px;font-weight:500;white-space:nowrap;background:var(--surf2);color:var(--on2)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;padding:10px 20px;font-size:14px;font-weight:500;border:1px solid transparent;transition:filter .15s,background .15s;white-space:nowrap}
+.btn-fill{background:var(--pri);color:var(--onpri)}.btn-fill:hover{filter:brightness(1.08)}
+.btn-tonal{background:var(--pric);color:var(--onpric)}.btn-tonal:hover{filter:brightness(.97)}
+.btn-out{border-color:var(--line);color:var(--pri)}.btn-out:hover{background:var(--surf2)}
+.btn-text{color:var(--pri);font-size:12px;font-weight:500;padding:2px 6px;border-radius:6px}.btn-text:hover{background:var(--surf2)}
+.icon-btn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--on2)}.icon-btn:hover{background:var(--surf2)}
+.round{width:48px;height:48px;border-radius:50%;background:var(--surf2);display:grid;place-items:center}.round:hover{filter:brightness(.96)}
+.sw{width:52px;height:32px;border-radius:999px;background:var(--surf2);border:2px solid var(--on2);position:relative;transition:.2s;flex:none}
+.sw::after{content:"";position:absolute;top:50%;left:6px;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:var(--on2);transition:.2s}
 .sw[aria-checked=true]{background:var(--pri);border-color:var(--pri)}
-.sw[aria-checked=true]::after{left:28px;background:var(--onpri);width:20px;height:20px}
-.mode{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:16px;border:1px solid var(--line);font-size:12px;color:var(--on2);flex:1}
-.mode.on{background:var(--pric);color:var(--onpric);border-color:transparent;font-weight:500}
-.mode:disabled,.dis{opacity:.4;pointer-events:none}
-.raincell{height:28px;border-radius:4px;background:var(--surf2)} .raincell.w{background:var(--rain)}
-.pulse{animation:pulse 1.8s ease-in-out infinite} @keyframes pulse{50%{opacity:.35}}
+.sw[aria-checked=true]::after{left:26px;width:22px;height:22px;margin-top:-11px;background:var(--onpri)}
+.seg{display:inline-flex}.seg button{padding:7px 16px;font-size:14px;border:1px solid var(--line);margin-left:-1px;color:var(--on2)}
+.seg button:first-child{border-radius:999px 0 0 999px;margin-left:0}.seg button:last-child{border-radius:0 999px 999px 0}
+.seg button.on{background:var(--pric);color:var(--onpric);font-weight:500}
+.field{background:var(--surf2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;width:100%;font-size:15px;color:var(--on)}
+.field.mono{font-family:'JetBrains Mono',monospace;font-size:14px}
+label.lbl{display:block;font-size:12px;color:var(--on2)}label.lbl .field{margin-top:4px}
+.rng{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:999px;outline-offset:6px;background:linear-gradient(to right,var(--pri) var(--p,50%),var(--surf2) var(--p,50%))}
+.rng::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--pri);border:3px solid var(--surf);box-shadow:0 0 0 1px var(--pri)}
+.rng::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--pri);border:3px solid var(--surf)}
+.bar{height:8px;border-radius:999px;background:var(--surf2);overflow:hidden}.bar>i{display:block;height:100%;background:var(--pri);border-radius:999px;transition:width .4s}
+.bulb{width:44px;height:44px;border-radius:14px;background:var(--surf2);color:var(--on2);display:grid;place-items:center;flex:none}
+.dot{width:26px;height:26px;border-radius:50%;border:2px solid var(--surf);box-shadow:0 0 0 1px var(--line)}.dot.on{box-shadow:0 0 0 2px var(--on)}
+.dis{opacity:.4;pointer-events:none}
+.scroller{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.scroller::-webkit-scrollbar{display:none}
+.rain-cell{height:26px;border-radius:4px;background:var(--surf2)}.rain-cell.w{background:var(--pri)}
+.hero{background:var(--pric);color:var(--onpric);border-color:transparent}
+.sheet-wrap{position:fixed;inset:0;z-index:60;background:rgba(8,12,24,.5);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surf);width:100%;max-width:520px;max-height:92%;overflow-y:auto;border-radius:28px 28px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom,0px))}
+@media (min-width:640px){.sheet-wrap{align-items:center}.sheet{border-radius:28px}}
+.fab{position:fixed;z-index:34;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(88px + env(safe-area-inset-bottom,0px));box-shadow:0 6px 18px rgba(10,91,211,.35)}
+@media (min-width:1024px){.fab{bottom:28px}}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:70;background:var(--on);color:var(--bg);padding:10px 18px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw}
+@media (min-width:1024px){#toast{bottom:32px}}
+.tbl{width:100%;font-size:14px;border-collapse:collapse}.tbl th{font-weight:400;color:var(--on2);font-size:12px;text-align:right;padding:6px 0;border-bottom:1px solid var(--line)}.tbl th:first-child{text-align:left}
+.tbl td{padding:6px 0;text-align:right;border-bottom:1px solid var(--surf2)}.tbl td:first-child{text-align:left}
+.pulse{animation:pulse 1.8s ease-in-out infinite}@keyframes pulse{50%{opacity:.35}}
 @media (prefers-reduced-motion:reduce){.pulse{animation:none}*{transition:none!important}}
 </style>
-</head>
-<body class="min-h-screen">
 
-<!-- Top app bar -->
-<header class="sticky top-0 z-20 border-b border-line" style="background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px)">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-3">
-    <span class="ms fill text-pri" style="font-size:28px">home_iot_device</span>
-    <div class="min-w-0">
-      <h1 class="text-lg font-medium leading-tight truncate">Smart Home Monitor</h1>
-      <p class="text-xs text-on2 leading-tight">ห้องนอนหนูรัก · อัปเดตล่าสุด <span id="lastUpd" class="num font-mono">--:--:--</span></p>
+<div class="shell">
+  <aside class="rail" aria-label="เมนูหลัก">
+    <div class="flex items-center gap-3 px-3 pb-4">
+      <div class="grid grid-cols-2 gap-[3px] w-7 h-7" aria-hidden="true"><i class="rounded-md" style="background:var(--pri)"></i><i class="rounded-md" style="background:var(--grn)"></i><i class="rounded-md" style="background:var(--pnk)"></i><i class="rounded-md" style="background:var(--pur)"></i></div>
+      <div class="font-medium leading-tight">Smart Home<br><span class="text-xs text-on2 font-normal">Monitor</span></div>
     </div>
-    <div class="ml-auto flex items-center gap-2">
-      <span id="conn" class="chip bg-pric text-onpric hidden sm:inline-flex"><span class="w-2 h-2 rounded-full bg-pri pulse"></span>เชื่อมต่อ (Main Server)</span>
-      <button id="themeBtn" class="w-10 h-10 rounded-full hover:bg-surf2 grid place-items-center" aria-label="สลับธีม"><span class="ms" id="themeIco">dark_mode</span></button>
-    </div>
+    <nav id="railNav" class="flex flex-col gap-1"></nav>
+  </aside>
+  <div class="col">
+    <header class="topbar">
+      <div class="grid grid-cols-2 gap-[2px] w-6 h-6 lg:hidden" aria-hidden="true"><i class="rounded-[4px]" style="background:var(--pri)"></i><i class="rounded-[4px]" style="background:var(--grn)"></i><i class="rounded-[4px]" style="background:var(--pnk)"></i><i class="rounded-[4px]" style="background:var(--pur)"></i></div>
+      <div class="min-w-0 flex-1"><h1 id="pageTitle" class="text-lg font-medium leading-tight truncate">ภาพรวม</h1><p class="text-xs text-on2 leading-tight">อัปเดต <span data-b="upd" class="num font-mono">--:--:--</span></p></div>
+      <span class="chip hidden sm:inline-flex" style="background:var(--pric);color:var(--onpric)"><span class="w-2 h-2 rounded-full pulse" style="background:var(--pri)"></span>ข้อมูลจำลอง</span>
+      <button class="icon-btn" id="themeBtn" aria-label="สลับธีมสว่าง/มืด"><span class="ms" id="themeIco">dark_mode</span></button>
+    </header>
+    <main id="view"></main>
   </div>
-</header>
-
-<main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-
-  <!-- Summary row -->
-  <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" aria-label="สรุปตอนนี้">
-    <div class="card p-4 sm:p-5">
-      <div class="flex items-center gap-2 text-on2 text-sm"><span class="ms text-pri">bolt</span>กำลังไฟตอนนี้</div>
-      <div class="mt-3 flex items-baseline gap-1.5"><span id="kW" class="text-3xl sm:text-4xl font-medium num">0</span><span class="text-on2">W</span></div>
-      <div class="mt-1 text-xs text-on2 num"><span id="amps">0.00</span> A · <span id="volt">230</span> V · PF <span id="pf">0.95</span></div>
-    </div>
-    <div class="card p-4 sm:p-5">
-      <div class="flex items-center gap-2 text-on2 text-sm"><span class="ms text-pri">payments</span>ค่าไฟเดือนนี้ (คาด)</div>
-      <div class="mt-3 flex items-baseline gap-1.5"><span class="text-on2">฿</span><span id="topBill" class="text-3xl sm:text-4xl font-medium num">0</span></div>
-      <div class="mt-1 text-xs text-on2 num">สะสม <span id="topKwh">0</span> kWh · วันนี้ <span id="todayKwh">0</span> kWh</div>
-    </div>
-    <div class="card p-4 sm:p-5">
-      <div class="flex items-center gap-2 text-on2 text-sm"><span class="ms text-pri">device_thermostat</span>อุณหภูมิห้อง</div>
-      <div class="mt-3 flex items-baseline gap-1.5"><span id="tNow" class="text-3xl sm:text-4xl font-medium num">0</span><span class="text-on2">°C</span></div>
-      <div class="mt-1 text-xs text-on2 num">ความชื้น <span id="hNow">0</span>% · <span id="tState">—</span></div>
-    </div>
-    <div class="card p-4 sm:p-5" id="rainTop">
-      <div class="flex items-center gap-2 text-on2 text-sm"><span class="ms text-rain">rainy</span>เซนเซอร์ฝน</div>
-      <div class="mt-3"><span id="rainChip" class="chip bg-surf2 text-on2">—</span></div>
-      <div class="mt-2 text-xs text-on2">ล่าสุด <span id="rainLast">—</span></div>
-    </div>
-  </section>
-
-  <!-- Power usage + summary/export -->
-  <section class="grid lg:grid-cols-3 gap-4">
-    <div class="card p-5 lg:col-span-2">
-      <div class="flex flex-wrap items-center gap-3 mb-1">
-        <div><h2 class="text-base font-medium">การใช้ไฟฟ้า</h2><p class="text-xs text-on2">หน่วย kWh ต่อช่วงเวลา</p></div>
-        <div class="seg ml-auto flex" id="rangeSeg" role="group" aria-label="ช่วงเวลา">
-          <button data-r="24h" class="on">24 ชม.</button><button data-r="7d">7 วัน</button><button data-r="30d">30 วัน</button>
-        </div>
-      </div>
-      <div class="relative h-64 sm:h-72"><canvas id="usageChart" aria-label="กราฟการใช้ไฟฟ้า"></canvas></div>
-    </div>
-
-    <div class="card p-5 flex flex-col">
-      <h2 class="text-base font-medium">สรุปช่วงที่เลือก</h2>
-      <p class="text-xs text-on2 mb-4" id="sumRangeLbl">24 ชั่วโมงล่าสุด</p>
-      <dl class="grid grid-cols-2 gap-x-4 gap-y-4">
-        <div><dt class="text-xs text-on2">ใช้ไปทั้งหมด</dt><dd class="text-2xl font-medium num"><span id="sTot">0</span> <span class="text-sm text-on2 font-normal">kWh</span></dd></div>
-        <div><dt class="text-xs text-on2">ค่าไฟโดยประมาณ</dt><dd class="text-2xl font-medium num"><span class="text-sm text-on2 font-normal">฿</span><span id="sCost">0</span></dd></div>
-        <div><dt class="text-xs text-on2">สูงสุด</dt><dd class="text-lg num"><span id="sPeak">0</span> <span class="text-xs text-on2">kWh</span></dd><dd class="text-xs text-on2" id="sPeakAt">—</dd></div>
-        <div><dt class="text-xs text-on2">เฉลี่ย</dt><dd class="text-lg num"><span id="sAvg">0</span> <span class="text-xs text-on2">kWh/ช่วง</span></dd></div>
-      </dl>
-      <div class="mt-auto pt-5 flex flex-wrap gap-2">
-        <button class="btn btn-fill flex-1" id="expCsv"><span class="ms" style="font-size:20px">download</span>Export CSV</button>
-        <button class="btn btn-out" id="expJson"><span class="ms" style="font-size:20px">data_object</span>JSON</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- Bill calculator + AC -->
-  <section class="grid lg:grid-cols-3 gap-4">
-    <div class="card p-5 lg:col-span-2">
-      <div class="flex items-center gap-2 mb-1"><span class="ms text-pri">receipt_long</span><h2 class="text-base font-medium">คำนวณค่าไฟ</h2></div>
-      <p class="text-xs text-on2 mb-4">อัตราก้าวหน้า บ้านอยู่อาศัย (ใช้เกิน 150 หน่วย/เดือน) · แก้ค่าได้ให้ตรงกับบิลจริง</p>
-      <div class="grid sm:grid-cols-2 gap-6">
-        <div>
-          <div class="flex gap-3">
-            <label class="flex-1 text-xs text-on2">ค่า Ft (บาท/หน่วย)<input id="ft" class="field mt-1" type="number" step="0.0001" value="0.3972"></label>
-            <label class="flex-1 text-xs text-on2">ค่าบริการ (บาท)<input id="svc" class="field mt-1" type="number" step="0.01" value="24.62"></label>
-          </div>
-          <label class="block mt-3 text-xs text-on2">ภาษีมูลค่าเพิ่ม (%)<input id="vat" class="field mt-1" type="number" step="0.5" value="7"></label>
-          <div class="mt-4 rounded-2xl bg-pric text-onpric p-4">
-            <div class="text-xs opacity-80">ประมาณการสิ้นเดือน (<span id="projKwh" class="num">0</span> kWh)</div>
-            <div class="text-3xl font-medium num mt-1">฿ <span id="projBill">0</span></div>
-            <div class="text-xs opacity-80 mt-1 num">ถึงวันนี้ ฿<span id="mtdBill">0</span> · เฉลี่ย <span id="effRate">0</span> บาท/หน่วย</div>
-          </div>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm num" id="tierTbl">
-            <thead><tr class="text-xs text-on2 text-left border-b border-line"><th class="py-2 font-normal">ช่วงหน่วย</th><th class="font-normal text-right">หน่วย</th><th class="font-normal text-right">บาท/หน่วย</th><th class="font-normal text-right">บาท</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- AC control -->
-    <div class="card p-5" id="acCard">
-      <div class="flex items-center gap-2">
-        <span class="ms fill text-pri">ac_unit</span><h2 class="text-base font-medium">แอร์</h2>
-        <span id="acChip" class="chip bg-surf2 text-on2 ml-auto">ปิด</span>
-      </div>
-      <div class="flex items-center justify-between mt-4">
-        <span class="text-sm">เปิด / ปิดเครื่อง</span>
-        <button id="acSw" class="sw" role="switch" aria-checked="false" aria-label="เปิดปิดแอร์"></button>
-      </div>
-      <div id="acBody" class="dis mt-5">
-        <div class="flex items-center justify-between">
-          <button class="w-12 h-12 rounded-full bg-surf2 grid place-items-center hover:brightness-95" id="tDown" aria-label="ลดอุณหภูมิ"><span class="ms">remove</span></button>
-          <div class="text-center"><div class="text-5xl font-medium num"><span id="acSet">25</span><span class="text-2xl text-on2">°C</span></div><div class="text-xs text-on2">ตั้งอุณหภูมิ</div></div>
-          <button class="w-12 h-12 rounded-full bg-surf2 grid place-items-center hover:brightness-95" id="tUp" aria-label="เพิ่มอุณหภูมิ"><span class="ms">add</span></button>
-        </div>
-        <input type="range" id="acRange" min="16" max="30" value="25" class="mt-4" aria-label="อุณหภูมิ">
-        <div class="flex gap-2 mt-4" id="modes">
-          <button class="mode on" data-m="cool"><span class="ms">ac_unit</span>เย็น</button>
-          <button class="mode" data-m="dry"><span class="ms">water_drop</span>ลดชื้น</button>
-          <button class="mode" data-m="fan"><span class="ms">mode_fan</span>พัดลม</button>
-          <button class="mode" data-m="auto"><span class="ms">auto_mode</span>อัตโนมัติ</button>
-        </div>
-        <div class="flex items-center gap-3 mt-4"><span class="text-xs text-on2 w-14">แรงลม</span>
-          <div class="seg flex flex-1" id="fans"><button data-f="1" class="flex-1">ต่ำ</button><button data-f="2" class="flex-1 on">กลาง</button><button data-f="3" class="flex-1">สูง</button></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Temp chart + rain -->
-  <section class="grid lg:grid-cols-3 gap-4">
-    <div class="card p-5 lg:col-span-2">
-      <div class="flex items-center gap-2 mb-1"><span class="ms text-pri">thermostat</span><h2 class="text-base font-medium">อุณหภูมิและความชื้น 24 ชม.</h2></div>
-      <div class="relative h-56 sm:h-64"><canvas id="tempChart" aria-label="กราฟอุณหภูมิ"></canvas></div>
-    </div>
-    <div class="card p-5" id="rainCard">
-      <div class="flex items-center gap-2 mb-4"><span class="ms fill text-rain" id="rainIco">cloud</span><h2 class="text-base font-medium">สถานะฝน</h2></div>
-      <div class="text-3xl font-medium" id="rainTitle">—</div>
-      <p class="text-sm text-on2 mt-1" id="rainSub">—</p>
-      <div class="mt-5"><div class="flex justify-between text-xs text-on2 mb-1"><span>ค่าความเปียกของเซนเซอร์</span><span class="num"><span id="wet">0</span>%</span></div>
-        <div class="h-2 rounded-full bg-surf2 overflow-hidden"><div id="wetBar" class="h-full bg-rain transition-all" style="width:0%"></div></div></div>
-      <div class="mt-5 text-xs text-on2 mb-2">ฝนตกใน 24 ชม. (1 ช่อง = 1 ชม.)</div>
-      <div class="grid gap-[3px]" style="grid-template-columns:repeat(24,1fr)" id="rainGrid"></div>
-      <div class="flex justify-between text-[11px] text-on2 mt-1 num"><span>-24</span><span>-12</span><span>ตอนนี้</span></div>
-      <p class="text-xs text-on2 mt-4">ฝนตกรวม <span id="rainHrs" class="num">0</span> ชม. ใน 24 ชม.ล่าสุด</p>
-    </div>
-  </section>
-
-  <footer class="text-xs text-on2 pb-6">Systems by PoomZ</footer>
-</main>
-
-<div id="toast" class="fixed left-1/2 -translate-x-1/2 bottom-6 z-30 bg-on text-bg px-4 py-3 rounded-xl text-sm shadow-lg opacity-0 pointer-events-none transition-opacity"></div>
+</div>
+<nav class="bottom" id="botNav" aria-label="เมนูหลัก"></nav>
+<div id="sheet" class="sheet-wrap" hidden><div class="sheet" id="sheetBody" role="dialog" aria-modal="true"></div></div>
+<div id="toast" role="status"></div>
 
 <script>
-/* ============ Api: แทนที่ด้วย MQTT / REST / WebSocket ของคุณ ============
-   - getHistory(): [{t:ms, kwh, temp, hum}] รายชั่วโมงย้อนหลัง 30 วัน
-   - subscribe(cb): เรียก cb({watts, volts, amps, pf, temp, hum, rainWet, raining}) ทุกครั้งที่ได้ค่าใหม่
-   - sendAC(state): ส่งคำสั่งแอร์ {on, set, mode, fan}
-*/
-const Api = {
-  _hist: null,
-  getHistory() {
-    if (this._hist) return this._hist;
-    const H = 3600e3, end = Math.floor(Date.now() / H) * H, out = [];
-    let s = 7; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
-    for (let i = 719; i >= 0; i--) {
-      const t = end - i * H, d = new Date(t), h = d.getHours();
-      const night = h >= 21 || h < 6, eve = h >= 17 && h < 21, noon = h >= 12 && h < 16;
-      const kwh = 0.08 + (night ? 0.55 : 0) + (eve ? 0.3 : 0) + (noon ? 0.15 : 0) + r() * 0.12;
-      const outdoor = 27 + 6 * Math.sin((h - 9) / 24 * 2 * Math.PI);
-      const temp = night ? 25 + r() * 1.2 : outdoor + r() * 0.8;
-      out.push({ t, kwh: +kwh.toFixed(3), temp: +temp.toFixed(1), hum: Math.round(62 + r() * 12 - (noon ? 8 : 0)) });
-    }
-    return (this._hist = out);
-  },
-  subscribe(cb) {
-    let temp = 28.4, hum = 64, wet = 4, raining = false, ac = null;
-    this._acRef = s => (ac = s);
-    const tick = () => {
-      const target = ac && ac.on ? ac.set : 30;
-      temp += (target - temp) * (ac && ac.on ? 0.06 : 0.01) + (Math.random() - .5) * 0.1;
-      hum += (Math.random() - .5) * 0.8; hum = Math.max(45, Math.min(85, hum));
-      if (Math.random() < 0.03) raining = !raining;
-      wet += raining ? 9 : -5; wet = Math.max(2, Math.min(96, wet));
-      const watts = ac && ac.on ? (ac.mode === 'fan' ? 70 : 520 + (temp - ac.set) * 90 + (ac.fan * 40)) : 55;
-      const volts = 229 + Math.random() * 3, pf = ac && ac.on ? 0.92 : 0.8;
-      const w = Math.max(30, watts + (Math.random() - .5) * 30);
-      cb({ watts: w, volts, amps: w / (volts * pf), pf, temp, hum, rainWet: wet, raining });
-    };
-    tick(); return setInterval(tick, 2500);
-  },
-  sendAC(state) { console.log('sendAC', state); if (this._acRef) this._acRef(state); /* เช่น mqtt.publish('home/ac/cmd', JSON.stringify(state)) */ }
+/* ============ helpers ============ */
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const f=(n,d=0)=>Number(n).toLocaleString('th-TH',{minimumFractionDigits:d,maximumFractionDigits:d});
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ic=(n,c='',fill)=>`<span class="ms${fill?' fill':''} ${c}" aria-hidden="true">${n}</span>`;
+const cv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const tone=k=>`background:var(--${k}c);color:var(--on${k}c)`;
+const toast=m=>{const e=$('#toast');e.textContent=m;e.style.opacity=1;clearTimeout(toast._t);toast._t=setTimeout(()=>e.style.opacity=0,2400)};
+
+/* ============ model ============ */
+const ROOMS=[
+ {id:'bedroom',name:'ห้องนอน',icon:'bed',k:'pur',base:27.5,hum:62,ac:true},
+ {id:'bath',name:'ห้องน้ำ',icon:'bathtub',k:'pri',base:28.5,hum:76},
+ {id:'living',name:'ห้องนั่งเล่น',icon:'weekend',k:'pnk',base:28.8,hum:60,ac:true},
+ {id:'kitchen',name:'ห้องครัว',icon:'kitchen',k:'grn',base:30,hum:66},
+ {id:'balcony',name:'ระเบียง',icon:'deck',k:'pri',base:31,hum:70,outdoor:true}
+];
+const SER={bath:'--s1',kitchen:'--s2',bedroom:'--s3',living:'--s4'};
+const DASH={bath:[],kitchen:[7,4],bedroom:[2,3],living:[10,3,2,3]};
+const TYPES={onoff:'เปิด/ปิด',dim:'หรี่แสงได้',rgb:'เปลี่ยนสีได้'};
+const COLORS=[{n:'ขาวอุ่น',c:'#ffc78a'},{n:'ฟ้า',c:'#4d94ff'},{n:'เขียว',c:'#3ec97a'},{n:'ชมพู',c:'#ff6fa5'},{n:'ม่วง',c:'#9b6dff'}];
+const KEY='smarthome.v2';
+let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
+const S={
+ lights:saved.lights||[
+  {id:'l1',name:'ไฟเพดาน',room:'bedroom',type:'dim',on:true,bri:60,col:0,dev:'home/bedroom/light1'},
+  {id:'l2',name:'ไฟหัวเตียง',room:'bedroom',type:'rgb',on:false,bri:40,col:3,dev:'home/bedroom/light2'},
+  {id:'l3',name:'ไฟห้องน้ำ',room:'bath',type:'onoff',on:false,bri:100,col:0,dev:'home/bath/light1'},
+  {id:'l4',name:'ไฟเพดาน',room:'living',type:'dim',on:true,bri:80,col:0,dev:'home/living/light1'},
+  {id:'l5',name:'ไฟตกแต่ง',room:'living',type:'rgb',on:true,bri:50,col:4,dev:'home/living/light2'},
+  {id:'l6',name:'ไฟครัว',room:'kitchen',type:'onoff',on:true,bri:100,col:0,dev:'home/kitchen/light1'},
+  {id:'l7',name:'ไฟระเบียง',room:'balcony',type:'onoff',on:false,bri:100,col:0,dev:'home/balcony/light1'}],
+ ac:saved.ac||{bedroom:{on:false,set:25,mode:'cool',fan:2},living:{on:true,set:26,mode:'cool',fan:2}},
+ rules:saved.rules||[
+  {id:'r1',c:'อุณหภูมิห้องนอนเกิน 29°C',a:'เปิดแอร์ห้องนอนที่ 25°C',on:true,k:'pur'},
+  {id:'r2',c:'ฝนเริ่มตก',a:'ส่งแจ้งเตือนเข้า LINE',on:true,k:'pri'},
+  {id:'r3',c:'ไม่มีคนในห้องนั่งเล่น 30 นาที',a:'ปิดไฟและแอร์ห้องนั่งเล่น',on:true,k:'pnk'},
+  {id:'r4',c:'ถึงเวลา 23:00 ทุกวัน',a:'ปิดไฟทั้งหมด',on:false,k:'grn'},
+  {id:'r5',c:'ไฟรวมเกิน 80% ของเบรกเกอร์',a:'ส่งแจ้งเตือนเข้า LINE',on:true,k:'pri'}],
+ budget:saved.budget??1500,breaker:saved.breaker??30,ft:saved.ft??0.3972,svc:saved.svc??24.62,vat:saved.vat??7,
+ mqtt:saved.mqtt||{url:'wss://broker.local:8884',prefix:'home'},
+ range:'24h',page:'home',arg:null
 };
+S.live={meter:{watts:120,volts:230,amps:.6,pf:.85},rain:{raining:false,wet:4},
+ rooms:Object.fromEntries(ROOMS.map(r=>[r.id,{t:r.base,h:r.hum,motion:r.id==='living',door:false}]))};
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify({lights:S.lights,ac:S.ac,rules:S.rules,budget:S.budget,breaker:S.breaker,ft:S.ft,svc:S.svc,vat:S.vat,mqtt:S.mqtt}))}catch(e){}};
+const roomOf=id=>ROOMS.find(r=>r.id===id);
+const lightsOn=rid=>S.lights.filter(l=>l.on&&(!rid||l.room===rid)).length;
 
-/* ============ Utilities ============ */
-const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
-const f = (n, d = 0) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: d, maximumFractionDigits: d });
-const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-const toast = m => { const e = $('#toast'); e.textContent = m; e.style.opacity = 1; clearTimeout(toast._t); toast._t = setTimeout(() => e.style.opacity = 0, 2200); };
+/* ============ Api — แทนที่ส่วนนี้ด้วย MQTT / REST / WebSocket จริง ============
+   hist(): [{t,kwh,temp,hum}] รายชั่วโมงย้อนหลัง 30 วัน (จากเซนเซอร์ที่ตู้เบรกเกอร์)
+   subscribe(cb): cb({rooms:{id:{t,h,motion,door}}, rain:{raining,wet}, meter:{watts,volts,amps,pf}})
+   send(cmd): ส่งคำสั่ง {type:'light'|'ac', ...} เช่น mqtt.publish(topic, payload) */
+const Api={
+ _h:null,
+ hist(){
+  if(this._h)return this._h;
+  const H=3600e3,end=Math.floor(Date.now()/H)*H,out=[];let s=7;const r=()=>(s=(s*16807)%2147483647)/2147483647;
+  for(let i=719;i>=0;i--){const t=end-i*H,h=new Date(t).getHours();
+   const night=h>=21||h<6,eve=h>=17&&h<21,noon=h>=12&&h<16;
+   const kwh=0.1+(night?0.55:0)+(eve?0.3:0)+(noon?0.15:0)+r()*0.12;
+   const temp=night?25+r()*1.2:27+6*Math.sin((h-9)/24*2*Math.PI)+r()*.8;
+   out.push({t,kwh:+kwh.toFixed(3),temp:+temp.toFixed(1),hum:Math.round(62+r()*12)})}
+  return(this._h=out)},
+ subscribe(cb){
+  const step=()=>{
+   const L=S.live,rooms={};
+   ROOMS.forEach(r=>{const x=L.rooms[r.id],a=S.ac[r.id];
+    const target=a&&a.on?(a.mode==='fan'?r.base-1:a.set):r.base;
+    rooms[r.id]={t:x.t+(target-x.t)*(a&&a.on?.07:.015)+(Math.random()-.5)*.08,
+     h:Math.max(40,Math.min(88,x.h+(Math.random()-.5)*.8+(r.hum-x.h)*.02)),
+     motion:Math.random()<.06?!x.motion:x.motion,door:Math.random()<.03?!x.door:x.door}});
+   const raining=L.rain.raining?Math.random()>.04:Math.random()<.025;
+   const wet=Math.max(2,Math.min(96,L.rain.wet+(raining?10:-5)));
+   let w=95;S.lights.forEach(l=>{if(l.on)w+=l.type==='onoff'?9:1+9*l.bri/100});
+   let acOn=false;Object.entries(S.ac).forEach(([id,a])=>{if(a.on){acOn=true;w+=a.mode==='fan'?60:Math.max(250,450+(rooms[id].t-a.set)*120+a.fan*50)}});
+   w+=(Math.random()-.5)*20;const v=229+Math.random()*3,pf=acOn?.92:.82;
+   cb({rooms,rain:{raining,wet},meter:{watts:w,volts:v,amps:w/(v*pf),pf}})};
+  step();return setInterval(step,2500)},
+ send(c){console.log('cmd',c)}
+};
+const hist=Api.hist();
 
-/* ============ Theme ============ */
-const setTheme = d => { document.documentElement.classList.toggle('dark', d); $('#themeIco').textContent = d ? 'light_mode' : 'dark_mode'; try { localStorage.setItem('theme', d ? 'd' : 'l'); } catch (e) {} drawCharts(); };
-$('#themeBtn').onclick = () => setTheme(!document.documentElement.classList.contains('dark'));
-let pref = null; try { pref = localStorage.getItem('theme'); } catch (e) {}
-document.documentElement.classList.toggle('dark', pref ? pref === 'd' : matchMedia('(prefers-color-scheme:dark)').matches);
-$('#themeIco').textContent = document.documentElement.classList.contains('dark') ? 'light_mode' : 'dark_mode';
+/* ============ bill ============ */
+const TIERS=[[15,2.3488],[10,2.9882],[10,3.2405],[65,3.6237],[50,3.7171],[250,4.2218],[Infinity,4.4217]];
+function bill(kwh){let left=kwh,from=1,rows=[],en=0;
+ for(const[size,rate]of TIERS){const u=Math.min(left,size);rows.push({from,to:size===Infinity?null:from+size-1,u,rate,amt:u*rate});en+=u*rate;left-=u;from+=size;if(left<=0)break}
+ const ft=kwh*S.ft,sub=en+ft+S.svc,vat=sub*S.vat/100;return{rows,en,ft,svc:S.svc,vat,total:sub+vat}}
+function monthStats(){const n=new Date(),m=hist.filter(x=>{const d=new Date(x.t);return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear()});
+ const kwh=m.reduce((a,x)=>a+x.kwh,0),dim=new Date(n.getFullYear(),n.getMonth()+1,0).getDate(),el=(n.getDate()-1)+(n.getHours()+n.getMinutes()/60)/24;
+ const today=hist.filter(x=>new Date(x.t).toDateString()===n.toDateString()).reduce((a,x)=>a+x.kwh,0);
+ return{kwh,today,proj:kwh/Math.max(el,.25)*dim}}
+function series(r){
+ if(r==='24h'){const a=hist.slice(-24);return{labels:a.map(x=>new Date(x.t).getHours()+':00'),vals:a.map(x=>x.kwh),times:a.map(x=>x.t)}}
+ const days=r==='7d'?7:30,map=new Map();hist.forEach(x=>{const k=new Date(x.t).toDateString();map.set(k,(map.get(k)||0)+x.kwh)});
+ const a=[...map.entries()].slice(-days);
+ return{labels:a.map(([k])=>new Date(k).toLocaleDateString('th-TH',{day:'numeric',month:'short'})),vals:a.map(([,v])=>+v.toFixed(2)),times:a.map(([k])=>new Date(k).getTime())}}
+let avgRate=4;
 
-/* ============ Electricity bill ============ */
-const TIERS = [[15, 2.3488], [10, 2.9882], [10, 3.2405], [65, 3.6237], [50, 3.7171], [250, 4.2218], [Infinity, 4.4217]];
-function bill(kwh) {
-  const ft = +$('#ft').value || 0, svc = +$('#svc').value || 0, vat = (+$('#vat').value || 0) / 100;
-  let left = kwh, from = 1, rows = [], energy = 0;
-  for (const [size, rate] of TIERS) {
-    const u = Math.min(left, size);
-    rows.push({ from, to: size === Infinity ? null : from + size - 1, u, rate, amt: u * rate });
-    energy += u * rate; left -= u; from += size; if (left <= 0) break;
-  }
-  const ftAmt = kwh * ft, sub = energy + ftAmt + svc, total = sub * (1 + vat);
-  return { rows, energy, ftAmt, svc, vat: sub * vat, total };
+/* ============ live binds ============ */
+const B=(k,v)=>$$(`[data-b="${k}"]`).forEach(e=>e.textContent=v);
+const W=(k,v)=>$$(`[data-bw="${k}"]`).forEach(e=>e.style.width=Math.max(0,Math.min(100,v))+'%');
+function roomStatus(r){const x=S.live.rooms[r.id];if(r.outdoor)return x.t>32?'ร้อนจัด':'อากาศปกติ';if(x.h>75)return'ชื้น';if(x.t>=30)return'ร้อน';if(x.t>=28)return'อุ่น';return'สบาย'}
+function tickUI(){
+ const L=S.live,m=L.meter,pct=m.watts/(S.breaker*m.volts)*100;
+ B('watts',f(m.watts));B('amps',f(m.amps,1));B('volts',f(m.volts));B('pf',f(m.pf,2));B('load',f(pct));W('load',pct);
+ B('lightsOn',lightsOn());B('lightsAll',S.lights.length);B('acOn',Object.values(S.ac).filter(a=>a.on).length);
+ ROOMS.forEach(r=>{const x=L.rooms[r.id];B('t:'+r.id,f(x.t,1));B('h:'+r.id,f(x.h));B('occ:'+r.id,x.motion?'มีคน':'ไม่มีคน');B('door:'+r.id,x.door?'เปิด':'ปิด');B('st:'+r.id,roomStatus(r));B('lon:'+r.id,lightsOn(r.id))});
+ B('wet',f(L.rain.wet));W('wet',L.rain.wet);
+ B('upd',new Date().toLocaleTimeString('th-TH',{hour12:false}));
 }
+function fillBill(){
+ const ms=monthStats(),b=bill(ms.proj),mtd=bill(ms.kwh);avgRate=b.total/Math.max(ms.proj,1);
+ B('kwhToday',f(ms.today,1));B('kwhMonth',f(ms.kwh,1));B('billProj',f(b.total));B('billProj2',f(b.total,2));B('projKwh',f(ms.proj));B('mtdBill',f(mtd.total));B('effRate',f(avgRate,2));
+ const pct=b.total/Math.max(S.budget,1)*100;B('budPct',f(pct));W('bud',pct);B('budLeft',f(Math.abs(S.budget-b.total)));
+ const chip=$('#budChip');if(chip){const k=pct<80?['grnc','ongrnc','อยู่ในงบ','check_circle']:pct<100?['warnc','warn','ใกล้เกินงบ','warning']:['errc','err','เกินงบ','error'];
+  chip.setAttribute('style',`background:var(--${k[0]});color:var(--${k[1]})`);chip.innerHTML=ic(k[3],'')+k[2]}
+ const tb=$('#tierBody');if(tb)tb.innerHTML=b.rows.map(r=>`<tr><td>${r.from}–${r.to??'∞'}</td><td>${f(r.u,1)}</td><td>${f(r.rate,4)}</td><td>${f(r.amt,2)}</td></tr>`).join('')+
+  `<tr class="text-on2"><td colspan="3">ค่า Ft</td><td>${f(b.ft,2)}</td></tr><tr class="text-on2"><td colspan="3">ค่าบริการ</td><td>${f(b.svc,2)}</td></tr><tr class="text-on2"><td colspan="3">VAT ${S.vat}%</td><td>${f(b.vat,2)}</td></tr><tr class="font-medium"><td colspan="3">รวม</td><td style="color:var(--pri)">${f(b.total,2)}</td></tr>`;
+ fillSummary();
+}
+function fillSummary(){
+ if(!$('#sTot'))return;const s=series(S.range),tot=s.vals.reduce((a,b)=>a+b,0),max=Math.max(...s.vals),i=s.vals.indexOf(max);
+ B('sTot',f(tot,1));B('sCost',f(tot*avgRate));B('sPeak',f(max,2));B('sPeakAt',s.labels[i]);B('sAvg',f(tot/s.vals.length,2));
+ B('sLbl',{'24h':'24 ชั่วโมงล่าสุด','7d':'7 วันล่าสุด','30d':'30 วันล่าสุด'}[S.range])}
 
-/* ============ Data helpers ============ */
-let hist = Api.getHistory(), range = '24h';
-function series(r) {
-  const H = hist;
-  if (r === '24h') { const a = H.slice(-24); return { labels: a.map(x => new Date(x.t).getHours() + ':00'), vals: a.map(x => x.kwh), times: a.map(x => x.t), unit: 'ชม.' }; }
-  const days = r === '7d' ? 7 : 30, map = new Map();
-  H.forEach(x => { const k = new Date(x.t).toDateString(); map.set(k, (map.get(k) || 0) + x.kwh); });
-  const a = [...map.entries()].slice(-days);
-  return { labels: a.map(([k]) => new Date(k).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })), vals: a.map(([, v]) => +v.toFixed(2)), times: a.map(([k]) => new Date(k).getTime()), unit: 'วัน' };
-}
-const monthData = () => { const n = new Date(); return hist.filter(x => { const d = new Date(x.t); return d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear(); }); };
+/* ============ charts ============ */
+const charts={};
+function mk(id,cfg){const el=$('#'+id);if(!el)return;if(charts[id])charts[id].destroy();
+ Chart.defaults.font.family='Prompt,sans-serif';Chart.defaults.color=cv('--on2');
+ cfg.options=Object.assign({maintainAspectRatio:false,animation:false},cfg.options);charts[id]=new Chart(el,cfg)}
+function killCharts(){Object.keys(charts).forEach(k=>{charts[k].destroy();delete charts[k]})}
+const gridC=()=>({color:cv('--line')});
+function drawUsage(){const s=series(S.range);
+ mk('usageChart',{type:'bar',data:{labels:s.labels,datasets:[{data:s.vals,backgroundColor:cv('--pri'),borderRadius:4,borderSkipped:'bottom',maxBarThickness:22}]},
+  options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${f(c.parsed.y,2)} kWh · ฿${f(c.parsed.y*avgRate,2)}`}}},
+   scales:{x:{grid:{display:false},ticks:{maxTicksLimit:S.range==='30d'?8:12,maxRotation:0}},y:{beginAtZero:true,grid:gridC(),border:{display:false},title:{display:true,text:'kWh'}}}}});
+ fillSummary()}
+function spark(vals,h=64){const w=320,max=Math.max(...vals),pts=vals.map((v,i)=>[i/(vals.length-1)*w,h-4-v/max*(h-12)]);
+ const d='M'+pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join('L');
+ return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px" aria-hidden="true"><path d="${d}L${w},${h}L0,${h}Z" fill="currentColor" opacity=".16"/><path d="${d}" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`}
 
-/* ============ Charts ============ */
-let uChart, tChart;
-function drawCharts() {
-  const pri = css('--pri'), on2 = css('--on2'), line = css('--line'), rain = css('--rain');
-  Chart.defaults.font.family = 'Prompt, sans-serif'; Chart.defaults.color = on2;
-  const s = series(range);
-  uChart && uChart.destroy(); tChart && tChart.destroy();
-  uChart = new Chart($('#usageChart'), {
-    type: 'bar',
-    data: { labels: s.labels, datasets: [{ data: s.vals, backgroundColor: pri, borderRadius: 4, borderSkipped: 'bottom', maxBarThickness: 22 }] },
-    options: { maintainAspectRatio: false, animation: { duration: 300 },
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${f(c.parsed.y, 2)} kWh · ฿${f(c.parsed.y * bill(300).total / 300, 2)}` } } },
-      scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: range === '30d' ? 8 : 12, maxRotation: 0 } }, y: { beginAtZero: true, grid: { color: line }, border: { display: false }, title: { display: true, text: 'kWh' } } } }
-  });
-  const t = hist.slice(-24);
-  tChart = new Chart($('#tempChart'), {
-    type: 'line',
-    data: { labels: t.map(x => new Date(x.t).getHours() + ':00'), datasets: [
-      { label: 'อุณหภูมิ (°C)', data: t.map(x => x.temp), borderColor: pri, backgroundColor: pri + '22', fill: true, tension: .35, pointRadius: 0, pointHoverRadius: 5, borderWidth: 2, yAxisID: 'y' },
-      { label: 'ความชื้น (%)', data: t.map(x => x.hum), borderColor: rain, borderDash: [5, 4], tension: .35, pointRadius: 0, pointHoverRadius: 5, borderWidth: 2, yAxisID: 'y1' }] },
-    options: { maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, animation: { duration: 300 },
-      plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } } },
-      scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 8, maxRotation: 0 } },
-        y: { grid: { color: line }, border: { display: false }, title: { display: true, text: '°C' } },
-        y1: { position: 'right', grid: { display: false }, border: { display: false }, title: { display: true, text: '%' } } } }
-  });
-  renderSummary();
-}
+/* ============ components ============ */
+const COND=['อุณหภูมิห้องนอนเกิน 29°C','อุณหภูมิห้องนั่งเล่นเกิน 29°C','ฝนเริ่มตก','ไม่มีคนในห้องนั่งเล่น 30 นาที','ถึงเวลา 23:00 ทุกวัน','ไฟรวมเกิน 80% ของเบรกเกอร์','ห้องน้ำชื้นเกิน 80%'];
+const ACT=['เปิดแอร์ห้องนอนที่ 25°C','ปิดแอร์ทุกเครื่อง','ปิดไฟทั้งหมด','ส่งแจ้งเตือนเข้า LINE','เปิดไฟระเบียง'];
+function lightCard(l){const r=roomOf(l.room),col=l.type==='rgb'?COLORS[l.col||0].c:'var(--lamp)';
+ return `<div class="card" id="lc-${l.id}">
+  <div class="flex items-center gap-3">
+   <div class="bulb" style="${l.on?`background:color-mix(in srgb,${col} 24%,var(--surf));color:${col}`:''}">${ic('lightbulb','',l.on)}</div>
+   <div class="min-w-0 flex-1"><div class="font-medium truncate">${esc(l.name)}</div><div class="text-xs text-on2 truncate">${r.name} · ${TYPES[l.type]}</div></div>
+   <button class="sw" role="switch" aria-checked="${l.on}" aria-label="เปิดปิด ${esc(l.name)}" data-act="lt" data-id="${l.id}"></button>
+  </div>
+  ${l.on&&l.type!=='onoff'?`<div class="mt-4 flex items-center gap-3">${ic('brightness_6','text-on2')}<input type="range" class="rng" min="1" max="100" value="${l.bri}" style="--p:${l.bri}%" data-act="bri" data-id="${l.id}" aria-label="ความสว่าง"><span class="num text-sm w-10 text-right" data-bri="${l.id}">${l.bri}%</span></div>`:''}
+  ${l.on&&l.type==='rgb'?`<div class="mt-3 flex items-center gap-2">${COLORS.map((c,i)=>`<button class="dot ${i===(l.col||0)?'on':''}" style="background:${c.c}" data-act="col" data-id="${l.id}" data-i="${i}" aria-label="สี${c.n}"></button>`).join('')}</div>`:''}
+  <div class="mt-3 flex items-center justify-between gap-2 text-xs text-on2"><span class="font-mono truncate">${esc(l.dev)}</span><button class="btn-text" data-act="del" data-id="${l.id}">ลบ</button></div>
+ </div>`}
+function acCard(rid){const r=roomOf(rid),a=S.ac[rid];
+ const modes=[['cool','ac_unit','เย็น'],['dry','water_drop','ลดชื้น'],['fan','mode_fan','พัดลม'],['auto','auto_mode','อัตโนมัติ']];
+ return `<div class="card" id="ac-${rid}">
+  <div class="flex items-center gap-3">
+   <div class="bulb" style="${tone(r.k)}">${ic('ac_unit','',true)}</div>
+   <div class="min-w-0 flex-1"><div class="font-medium">แอร์${r.name}</div><div class="text-xs text-on2">ตอนนี้ <span class="num" data-b="t:${rid}">–</span>°C · ชื้น <span class="num" data-b="h:${rid}">–</span>%</div></div>
+   <button class="sw" role="switch" aria-checked="${a.on}" aria-label="เปิดปิดแอร์${r.name}" data-act="acp" data-id="${rid}"></button>
+  </div>
+  <div class="${a.on?'':'dis'} mt-5">
+   <div class="flex items-center justify-between">
+    <button class="round" data-act="act" data-id="${rid}" data-d="-1" aria-label="ลดอุณหภูมิ">${ic('remove')}</button>
+    <div class="text-center"><div class="text-5xl font-medium num">${a.set}<span class="text-2xl text-on2">°C</span></div><div class="text-xs text-on2">ตั้งอุณหภูมิ</div></div>
+    <button class="round" data-act="act" data-id="${rid}" data-d="1" aria-label="เพิ่มอุณหภูมิ">${ic('add')}</button>
+   </div>
+   <input type="range" class="rng mt-4" min="16" max="30" value="${a.set}" style="--p:${(a.set-16)/14*100}%" data-act="acr" data-id="${rid}" aria-label="อุณหภูมิที่ตั้ง">
+   <div class="grid grid-cols-4 gap-2 mt-4">${modes.map(m=>`<button class="tile flex flex-col items-center gap-1 text-xs ${a.mode===m[0]?'':'text-on2'}" style="${a.mode===m[0]?tone('pri'):''}" data-act="mode" data-id="${rid}" data-m="${m[0]}">${ic(m[1])}${m[2]}</button>`).join('')}</div>
+   <div class="flex items-center gap-3 mt-4"><span class="text-xs text-on2 w-14">แรงลม</span><div class="seg flex-1 flex">${[['1','ต่ำ'],['2','กลาง'],['3','สูง']].map(x=>`<button class="flex-1 ${a.fan==x[0]?'on':''}" data-act="fan" data-id="${rid}" data-f="${x[0]}">${x[1]}</button>`).join('')}</div></div>
+  </div>
+ </div>`}
+function roomTile(r){const lc=S.lights.filter(l=>l.room===r.id).length,a=S.ac[r.id];
+ return `<a href="#room-${r.id}" class="card block hover:brightness-[.98]">
+  <div class="flex items-center gap-3"><div class="bulb" style="${tone(r.k)}">${ic(r.icon,'',true)}</div><div class="min-w-0 flex-1"><div class="font-medium truncate">${r.name}</div><div class="text-xs text-on2" data-b="st:${r.id}">–</div></div>${ic('chevron_right','text-on2')}</div>
+  <div class="mt-3 flex items-baseline gap-4"><div><span class="text-2xl font-medium num" data-b="t:${r.id}">–</span><span class="text-on2 text-sm">°C</span></div><div class="text-sm text-on2 num"><span data-b="h:${r.id}">–</span>% ชื้น</div></div>
+  <div class="mt-3 flex flex-wrap gap-1.5">
+   <span class="chip">${ic('lightbulb','',false).replace('class="ms','style="font-size:16px" class="ms')}<span data-b="lon:${r.id}">0</span>/${lc} ดวง</span>
+   ${a?`<span class="chip" style="${a.on?tone('pri'):''}">${ic('ac_unit','').replace('class="ms','style="font-size:16px" class="ms')}${a.on?a.set+'°C':'ปิด'}</span>`:''}
+   ${r.outdoor?'':`<span class="chip">${ic('directions_walk','').replace('class="ms','style="font-size:16px" class="ms')}<span data-b="occ:${r.id}">–</span></span>`}
+  </div></a>`}
+function head(t,sub,right=''){return `<div class="flex items-end gap-3 mb-4"><div class="flex-1 min-w-0"><h2 class="text-xl font-medium">${t}</h2>${sub?`<p class="text-sm text-on2">${sub}</p>`:''}</div>${right}</div>`}
+function alerts(){const a=[],L=S.live;
+ ROOMS.forEach(r=>{if(r.outdoor)return;const x=L.rooms[r.id];
+  if(lightsOn(r.id)&&!x.motion)a.push({i:'lightbulb',t:`ไฟ${r.name}เปิดอยู่ แต่ไม่มีคนในห้อง`,k:'warn',go:'room-'+r.id});
+  if(x.h>75)a.push({i:'water_drop',t:`${r.name}ชื้น ${f(x.h)}%`,k:'pri',go:'room-'+r.id})});
+ if(L.rain.raining)a.push({i:'rainy',t:'ฝนกำลังตก ควรเก็บของที่ระเบียง',k:'pri',go:'weather'});
+ const pct=L.meter.watts/(S.breaker*L.meter.volts)*100;if(pct>80)a.push({i:'bolt',t:`โหลดสูง ${f(pct)}% ของเบรกเกอร์หลัก`,k:'err',go:'energy'});
+ return a}
 
-/* ============ Summary / export ============ */
-let cur = { s: null };
-function renderSummary() {
-  const s = series(range); cur.s = s;
-  const tot = s.vals.reduce((a, b) => a + b, 0), max = Math.max(...s.vals), i = s.vals.indexOf(max);
-  const monthKwh = monthData().reduce((a, x) => a + x.kwh, 0);
-  // ค่าไฟของช่วง: ใช้ค่าเฉลี่ยต่อหน่วยจากบิลประมาณการเดือน เพื่อให้เทียบกันได้
-  const rate = bill(Math.max(monthKwh, 1)).total / Math.max(monthKwh, 1);
-  $('#sTot').textContent = f(tot, 1); $('#sCost').textContent = f(tot * rate, 0);
-  $('#sPeak').textContent = f(max, 2); $('#sAvg').textContent = f(tot / s.vals.length, 2);
-  $('#sPeakAt').textContent = 'ที่ ' + s.labels[i];
-  $('#sumRangeLbl').textContent = { '24h': '24 ชั่วโมงล่าสุด', '7d': '7 วันล่าสุด', '30d': '30 วันล่าสุด' }[range];
-  cur.rate = rate;
-}
-$$('#rangeSeg button').forEach(b => b.onclick = () => { $$('#rangeSeg button').forEach(x => x.classList.remove('on')); b.classList.add('on'); range = b.dataset.r; drawCharts(); });
-function download(name, mime, text) {
-  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + text], { type: mime })); a.download = name; document.body.appendChild(a); a.click(); a.remove();
-  toast('ดาวน์โหลด ' + name);
-}
-const rowsOut = () => { const s = cur.s; return s.vals.map((v, i) => ({ time: new Date(s.times[i]).toISOString(), label: s.labels[i], kwh: v, est_cost_thb: +(v * cur.rate).toFixed(2) })); };
-$('#expCsv').onclick = () => { const r = rowsOut(); download(`power-${range}-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv;charset=utf-8', 'time,label,kwh,est_cost_thb\n' + r.map(x => `${x.time},${x.label},${x.kwh},${x.est_cost_thb}`).join('\n')); };
-$('#expJson').onclick = () => download(`power-${range}.json`, 'application/json', JSON.stringify(rowsOut(), null, 2));
+/* ============ pages ============ */
+const R={},AFTER={},TITLE={home:'ภาพรวม',rooms:'ห้อง',room:'ห้อง',lights:'ไฟ',energy:'ไฟฟ้า',climate:'แอร์และอุณหภูมิ',weather:'ฝนและสภาพอากาศ',auto:'ระบบอัตโนมัติ',devices:'อุปกรณ์และตั้งค่า',more:'เพิ่มเติม'};
+const SCENES=[
+ {id:'away',n:'ออกจากบ้าน',i:'logout',k:'pri'},{id:'sleep',n:'เข้านอน',i:'bedtime',k:'pur'},
+ {id:'movie',n:'ดูหนัง',i:'movie',k:'pnk'},{id:'all',n:'เปิดไฟทั้งหมด',i:'wb_sunny',k:'grn'}];
 
-/* ============ Bill render ============ */
-function renderBill() {
-  const m = monthData(), kwh = m.reduce((a, x) => a + x.kwh, 0), n = new Date();
-  const dim = new Date(n.getFullYear(), n.getMonth() + 1, 0).getDate();
-  const elapsed = (n.getDate() - 1) + (n.getHours() + 1) / 24, proj = kwh / elapsed * dim;
-  const b = bill(proj), mtd = bill(kwh);
-  $('#projKwh').textContent = f(proj, 0); $('#projBill').textContent = f(b.total, 2); $('#mtdBill').textContent = f(mtd.total, 0);
-  $('#effRate').textContent = f(b.total / Math.max(proj, 1), 2);
-  $('#topBill').textContent = f(b.total, 0); $('#topKwh').textContent = f(kwh, 1);
-  const today = hist.filter(x => new Date(x.t).toDateString() === n.toDateString()).reduce((a, x) => a + x.kwh, 0);
-  $('#todayKwh').textContent = f(today, 1);
-  const rows = b.rows.map(r => `<tr class="border-b border-line/60"><td class="py-1.5">${r.from}–${r.to ?? '∞'}</td><td class="text-right">${f(r.u, 1)}</td><td class="text-right">${f(r.rate, 4)}</td><td class="text-right">${f(r.amt, 2)}</td></tr>`).join('') +
-    `<tr class="border-b border-line/60 text-on2"><td class="py-1.5" colspan="3">ค่า Ft</td><td class="text-right">${f(b.ftAmt, 2)}</td></tr>
-     <tr class="border-b border-line/60 text-on2"><td class="py-1.5" colspan="3">ค่าบริการ</td><td class="text-right">${f(b.svc, 2)}</td></tr>
-     <tr class="border-b border-line/60 text-on2"><td class="py-1.5" colspan="3">VAT</td><td class="text-right">${f(b.vat, 2)}</td></tr>
-     <tr class="font-medium"><td class="py-2" colspan="3">รวม</td><td class="text-right text-pri">${f(b.total, 2)}</td></tr>`;
-  $('#tierTbl tbody').innerHTML = rows;
-  renderSummary();
-}
-['#ft', '#svc', '#vat'].forEach(s => $(s).addEventListener('input', renderBill));
+R.home=()=>{
+ const h=new Date().getHours(),g=h<12?'สวัสดีตอนเช้า':h<17?'สวัสดีตอนบ่าย':'สวัสดีตอนเย็น';
+ const date=new Date().toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long'});
+ const al=alerts();
+ return `
+ <div class="mb-4"><div class="text-2xl font-medium">${g}</div><div class="text-sm text-on2">${date} · ไฟเปิด <span data-b="lightsOn" class="num">0</span> ดวง · แอร์เปิด <span data-b="acOn" class="num">0</span> เครื่อง</div></div>
+ <div class="grid lg:grid-cols-3 gap-4">
+  <div class="card hero lg:col-span-2">
+   <div class="flex items-center gap-2 text-sm">${ic('bolt','','true')}ไฟฟ้ารวมทั้งบ้าน <span class="opacity-80">· วัดที่ตู้เบรกเกอร์</span></div>
+   <div class="mt-2 flex items-end gap-2"><span class="text-5xl sm:text-6xl font-medium num" data-b="watts">0</span><span class="text-xl mb-1.5">W</span></div>
+   <div class="text-sm opacity-85 num"><span data-b="amps">0</span> A · <span data-b="volts">230</span> V · โหลด <span data-b="load">0</span>% ของเบรกเกอร์</div>
+   <div class="mt-3">${spark(hist.slice(-24).map(x=>x.kwh))}</div>
+   <div class="text-xs opacity-80 mb-3">การใช้ไฟรายชั่วโมง 24 ชม.ล่าสุด</div>
+   <div class="grid grid-cols-3 gap-3">
+    <div><div class="text-xs opacity-80">วันนี้</div><div class="text-xl font-medium num"><span data-b="kwhToday">0</span> <span class="text-xs font-normal">kWh</span></div></div>
+    <div><div class="text-xs opacity-80">เดือนนี้</div><div class="text-xl font-medium num"><span data-b="kwhMonth">0</span> <span class="text-xs font-normal">kWh</span></div></div>
+    <div><div class="text-xs opacity-80">ค่าไฟคาดสิ้นเดือน</div><div class="text-xl font-medium num">฿<span data-b="billProj">0</span></div></div>
+   </div>
+  </div>
+  <div class="card flex flex-col">
+   <div class="flex items-center gap-2 text-sm text-on2">${ic('rainy','','')}เซนเซอร์ฝน</div>
+   <div class="mt-3">${S.live.rain.raining?`<span class="chip" style="${tone('pri')}">${ic('water_drop','',true)}ฝนกำลังตก</span>`:`<span class="chip" style="${tone('grn')}">${ic('check_circle','',true)}ไม่มีฝน</span>`}</div>
+   <div class="mt-4"><div class="flex justify-between text-xs text-on2 mb-1"><span>ความเปียกของเซนเซอร์</span><span class="num"><span data-b="wet">0</span>%</span></div><div class="bar"><i data-bw="wet"></i></div></div>
+   <div class="mt-4 text-sm text-on2">ระเบียง <span class="num text-on" data-b="t:balcony">–</span>°C · ชื้น <span class="num text-on" data-b="h:balcony">–</span>%</div>
+   <a href="#weather" class="btn btn-out mt-auto self-start" style="margin-top:16px">ดูรายละเอียด</a>
+  </div>
+ </div>
+ <div class="mt-6"><h3 class="font-medium mb-2">ฉาก</h3><div class="scroller">${SCENES.map(s=>`<button class="btn" style="${tone(s.k)}" data-act="scene" data-id="${s.id}">${ic(s.i)}${s.n}</button>`).join('')}</div></div>
+ <div class="mt-6">${head('ห้องในบ้าน','แตะเพื่อดูสถานะและควบคุม','<a href="#rooms" class="btn-text">ดูทั้งหมด</a>')}
+  <div class="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-3 gap-3">${ROOMS.slice(0,4).map(roomTile).join('')}</div></div>
+ <div class="grid lg:grid-cols-2 gap-4 mt-6">
+  <div class="card"><div class="flex items-center gap-2 mb-3"><h3 class="font-medium flex-1">ต้องดู</h3><span class="chip">${al.length||'ไม่มี'} รายการ</span></div>
+   ${al.length?al.map(a=>`<a href="#${a.go}" class="flex items-center gap-3 py-2.5 border-t border-line first:border-0"><span class="bulb" style="width:36px;height:36px;border-radius:10px;background:var(--${a.k}c);color:var(--${a.k==='pri'?'onpric':a.k})">${ic(a.i)}</span><span class="flex-1 text-sm">${a.t}</span>${ic('chevron_right','text-on2')}</a>`).join(''):`<div class="flex items-center gap-3 text-sm text-on2 py-2">${ic('check_circle','')}ทุกอย่างปกติ</div>`}</div>
+  <div class="card"><div class="flex items-center gap-3"><div class="bulb" style="background:var(--lampc);color:var(--lamp)">${ic('lightbulb','',true)}</div><div class="flex-1"><div class="font-medium">ไฟที่เปิดอยู่</div><div class="text-sm text-on2"><span class="num" data-b="lightsOn">0</span> จาก <span class="num" data-b="lightsAll">0</span> ดวง</div></div></div>
+   <div class="flex gap-2 mt-4"><button class="btn btn-tonal flex-1" data-act="alloff">${ic('light_off','').replace('light_off','power_settings_new')}ปิดทั้งหมด</button><a href="#lights" class="btn btn-out flex-1">จัดการไฟ</a></div></div>
+ </div>`};
 
-/* ============ AC ============ */
-const ac = { on: false, set: 25, mode: 'cool', fan: 2 };
-function renderAC() {
-  $('#acSw').setAttribute('aria-checked', ac.on); $('#acBody').classList.toggle('dis', !ac.on);
-  $('#acSet').textContent = ac.set; $('#acRange').value = ac.set;
-  const c = $('#acChip'); c.textContent = ac.on ? ({ cool: 'กำลังทำความเย็น', dry: 'ลดความชื้น', fan: 'พัดลม', auto: 'อัตโนมัติ' }[ac.mode]) : 'ปิด';
-  c.className = 'chip ml-auto ' + (ac.on ? 'bg-pric text-onpric' : 'bg-surf2 text-on2');
-  $$('#modes .mode').forEach(b => b.classList.toggle('on', b.dataset.m === ac.mode));
-  $$('#fans button').forEach(b => b.classList.toggle('on', +b.dataset.f === ac.fan));
-}
-function pushAC(msg) { renderAC(); Api.sendAC({ ...ac }); if (msg) toast(msg); }
-$('#acSw').onclick = () => { ac.on = !ac.on; pushAC(ac.on ? 'เปิดแอร์แล้ว' : 'ปิดแอร์แล้ว'); };
-$('#tUp').onclick = () => { ac.set = Math.min(30, ac.set + 1); pushAC(); };
-$('#tDown').onclick = () => { ac.set = Math.max(16, ac.set - 1); pushAC(); };
-$('#acRange').oninput = e => { ac.set = +e.target.value; pushAC(); };
-$$('#modes .mode').forEach(b => b.onclick = () => { ac.mode = b.dataset.m; pushAC(); });
-$$('#fans button').forEach(b => b.onclick = () => { ac.fan = +b.dataset.f; pushAC(); });
+R.rooms=()=>`${head('ห้อง','สถานะคร่าว ๆ ของแต่ละห้อง')}
+ <div class="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-3 gap-3">${ROOMS.map(roomTile).join('')}</div>
+ <p class="text-xs text-on2 mt-4">ค่าไฟวัดรวมที่ตู้เบรกเกอร์ ไม่แยกรายห้อง ดูได้ที่หน้า <a href="#energy" style="color:var(--pri)">ไฟฟ้า</a></p>`;
 
-/* ============ Rain ============ */
-const rainHist = Array.from({ length: 24 }, (_, i) => (i > 3 && i < 7) || i === 15 || i === 16 ? 1 : 0);
-let wasRaining = null, lastRain = '08:40 น.';
-$('#rainGrid').innerHTML = rainHist.map(() => '<div class="raincell"></div>').join('');
-function renderRain(d) {
-  if (wasRaining === true && !d.raining) lastRain = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
-  if (d.raining) { lastRain = 'ตอนนี้'; rainHist[23] = 1; } else if (wasRaining !== null && wasRaining !== d.raining) {}
-  wasRaining = d.raining;
-  const wet = Math.round(d.rainWet);
-  $('#wet').textContent = wet; $('#wetBar').style.width = wet + '%';
-  $('#rainTitle').textContent = d.raining ? 'ฝนกำลังตก' : wet > 25 ? 'พื้นยังเปียก' : 'ไม่มีฝน';
-  $('#rainSub').textContent = d.raining ? 'ควรเก็บของที่ระเบียงและปิดหน้าต่าง' : 'ท้องฟ้าปลอดฝนตามเซนเซอร์';
-  $('#rainIco').textContent = d.raining ? 'rainy' : 'cloud';
-  const chip = $('#rainChip'); chip.className = 'chip ' + (d.raining ? 'bg-rainc text-rain' : 'bg-pric text-onpric');
-  chip.innerHTML = `<span class="ms fill" style="font-size:18px">${d.raining ? 'water_drop' : 'check_circle'}</span>${d.raining ? 'ฝนตก' : 'ไม่มีฝน'}`;
-  $('#rainLast').textContent = lastRain;
-  $$('#rainGrid .raincell').forEach((c, i) => c.classList.toggle('w', !!rainHist[i]));
-  $('#rainHrs').textContent = rainHist.reduce((a, b) => a + b, 0);
-}
+R.room=id=>{const r=roomOf(id),ls=S.lights.filter(l=>l.room===id);
+ return `<a href="#rooms" class="inline-flex items-center gap-1 text-sm text-on2 mb-3">${ic('arrow_back','').replace('class="ms','style="font-size:18px" class="ms')}ห้องทั้งหมด</a>
+ <div class="flex items-center gap-3 mb-4"><div class="bulb" style="${tone(r.k)};width:56px;height:56px;border-radius:18px">${ic(r.icon,'',true)}</div><div><h2 class="text-xl font-medium">${r.name}</h2><div class="text-sm text-on2" data-b="st:${id}">–</div></div></div>
+ <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+  <div class="tile"><div class="text-xs text-on2">อุณหภูมิ</div><div class="text-2xl font-medium num"><span data-b="t:${id}">–</span><span class="text-sm text-on2">°C</span></div></div>
+  <div class="tile"><div class="text-xs text-on2">ความชื้น</div><div class="text-2xl font-medium num"><span data-b="h:${id}">–</span><span class="text-sm text-on2">%</span></div></div>
+  ${r.outdoor?'':`<div class="tile"><div class="text-xs text-on2">การเคลื่อนไหว</div><div class="text-lg font-medium" data-b="occ:${id}">–</div></div>
+  <div class="tile"><div class="text-xs text-on2">ประตู</div><div class="text-lg font-medium" data-b="door:${id}">–</div></div>`}
+ </div>
+ <div class="mt-6">${head('ไฟ',`เปิดอยู่ <span class="num" data-b="lon:${id}">0</span> จาก ${ls.length} ดวง`,`<button class="btn btn-tonal" data-act="addlight" data-room="${id}">${ic('add')}เพิ่มหลอด</button>`)}
+  ${ls.length?`<div class="grid sm:grid-cols-2 gap-3">${ls.map(lightCard).join('')}</div>`:`<div class="card text-center text-on2 py-8">ยังไม่มีหลอดไฟในห้องนี้<br><button class="btn btn-fill mt-3" data-act="addlight" data-room="${id}">${ic('add')}เพิ่มหลอดไฟ</button></div>`}</div>
+ ${S.ac[id]?`<div class="mt-6">${head('แอร์')}<div class="max-w-md">${acCard(id)}</div></div>`:''}
+ <div class="card mt-6"><h3 class="font-medium">อุณหภูมิ 24 ชม.</h3><div class="relative h-52 mt-2"><canvas id="roomChart" aria-label="กราฟอุณหภูมิ${r.name}"></canvas></div></div>`};
+AFTER.room=id=>{const r=roomOf(id),t=hist.slice(-24),off=r.base-27;
+ mk('roomChart',{type:'line',data:{labels:t.map(x=>new Date(x.t).getHours()+':00'),datasets:[{data:t.map(x=>+(x.temp+off*.6).toFixed(1)),borderColor:cv('--'+r.k),backgroundColor:cv('--'+r.k)+'22',fill:true,tension:.35,pointRadius:0,pointHoverRadius:5,borderWidth:2}]},
+  options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${f(c.parsed.y,1)} °C`}}},scales:{x:{grid:{display:false},ticks:{maxTicksLimit:8,maxRotation:0}},y:{grid:gridC(),border:{display:false},title:{display:true,text:'°C'}}}}})};
 
-/* ============ Live ============ */
-function onData(d) {
-  $('#kW').textContent = f(d.watts, 0); $('#amps').textContent = f(d.amps, 2); $('#volt').textContent = f(d.volts, 0); $('#pf').textContent = f(d.pf, 2);
-  $('#tNow').textContent = f(d.temp, 1); $('#hNow').textContent = f(d.hum, 0);
-  $('#tState').textContent = d.temp > 29 ? 'ร้อน' : d.temp > 26 ? 'อุ่น' : 'สบาย';
-  $('#lastUpd').textContent = new Date().toLocaleTimeString('th-TH', { hour12: false });
-  renderRain(d);
-}
-renderAC(); renderBill(); drawCharts();
+R.lights=()=>`${head('ไฟ',`เปิดอยู่ <span class="num" data-b="lightsOn">0</span> จาก <span class="num" data-b="lightsAll">0</span> ดวง`,`<button class="btn btn-out" data-act="alloff">${ic('power_settings_new')}ปิดทั้งหมด</button>`)}
+ ${ROOMS.map(r=>{const ls=S.lights.filter(l=>l.room===r.id);if(!ls.length)return'';
+  return `<section class="mb-6"><div class="flex items-center gap-2 mb-2"><span class="chip" style="${tone(r.k)}">${ic(r.icon,'',true).replace('class="ms','style="font-size:16px" class="ms')}${r.name}</span><span class="text-xs text-on2"><span class="num" data-b="lon:${r.id}">0</span>/${ls.length} เปิด</span></div><div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">${ls.map(lightCard).join('')}</div></section>`}).join('')}
+ <button class="btn btn-fill fab" style="padding:16px 22px" data-act="addlight">${ic('add')}เพิ่มหลอดไฟ</button>`;
+
+R.energy=()=>`${head('ไฟฟ้ารวมทั้งบ้าน','เซนเซอร์วัดที่ตู้เบรกเกอร์ ไม่แยกรายห้อง')}
+ <div class="grid lg:grid-cols-3 gap-4">
+  <div class="card">
+   <div class="flex items-center gap-2 text-sm text-on2">${ic('bolt','','')}กำลังไฟตอนนี้</div>
+   <div class="mt-2 flex items-end gap-2"><span class="text-5xl font-medium num" data-b="watts">0</span><span class="text-xl text-on2 mb-1.5">W</span></div>
+   <div class="mt-4"><div class="flex justify-between text-xs text-on2 mb-1"><span>โหลดเทียบเบรกเกอร์ ${S.breaker} A</span><span class="num"><span data-b="load">0</span>%</span></div><div class="bar"><i data-bw="load"></i></div></div>
+   <div class="grid grid-cols-3 gap-2 mt-4">
+    <div class="tile"><div class="text-xs text-on2">แรงดัน</div><div class="font-medium num"><span data-b="volts">0</span> V</div></div>
+    <div class="tile"><div class="text-xs text-on2">กระแส</div><div class="font-medium num"><span data-b="amps">0</span> A</div></div>
+    <div class="tile"><div class="text-xs text-on2">PF</div><div class="font-medium num" data-b="pf">0</div></div>
+   </div>
+  </div>
+  <div class="card lg:col-span-2">
+   <div class="flex flex-wrap items-center gap-3"><div class="flex-1"><h3 class="font-medium">การใช้ไฟฟ้า</h3><p class="text-xs text-on2">kWh ต่อช่วงเวลา</p></div>
+    <div class="seg" id="rangeSeg" role="group" aria-label="ช่วงเวลา">${[['24h','24 ชม.'],['7d','7 วัน'],['30d','30 วัน']].map(x=>`<button data-act="range" data-r="${x[0]}" class="${S.range===x[0]?'on':''}">${x[1]}</button>`).join('')}</div></div>
+   <div class="relative h-56 sm:h-64 mt-2"><canvas id="usageChart" aria-label="กราฟการใช้ไฟฟ้า"></canvas></div>
+  </div>
+ </div>
+ <div class="grid lg:grid-cols-3 gap-4 mt-4">
+  <div class="card flex flex-col">
+   <h3 class="font-medium">สรุป</h3><p class="text-xs text-on2 mb-4" data-b="sLbl">–</p>
+   <dl class="grid grid-cols-2 gap-x-4 gap-y-4">
+    <div><dt class="text-xs text-on2">ใช้ไปทั้งหมด</dt><dd class="text-2xl font-medium num"><span data-b="sTot">0</span> <span class="text-sm text-on2 font-normal">kWh</span></dd></div>
+    <div><dt class="text-xs text-on2">ค่าไฟโดยประมาณ</dt><dd class="text-2xl font-medium num"><span class="text-sm text-on2 font-normal">฿</span><span data-b="sCost">0</span></dd></div>
+    <div><dt class="text-xs text-on2">สูงสุด</dt><dd class="text-lg num"><span data-b="sPeak">0</span> <span class="text-xs text-on2">kWh</span></dd><dd class="text-xs text-on2" data-b="sPeakAt">–</dd></div>
+    <div><dt class="text-xs text-on2">เฉลี่ย</dt><dd class="text-lg num"><span data-b="sAvg">0</span> <span class="text-xs text-on2">kWh</span></dd></div>
+   </dl>
+   <div class="mt-auto pt-5 flex gap-2"><button class="btn btn-fill flex-1" data-act="export" data-fmt="csv">${ic('download')}CSV</button><button class="btn btn-out flex-1" data-act="export" data-fmt="json">${ic('data_object')}JSON</button></div>
+  </div>
+  <div class="card lg:col-span-2">
+   <div class="flex items-center gap-2 mb-1">${ic('receipt_long','','')}<h3 class="font-medium">คำนวณค่าไฟ</h3></div>
+   <p class="text-xs text-on2 mb-4">อัตราก้าวหน้าบ้านอยู่อาศัย (ใช้เกิน 150 หน่วย/เดือน) แก้ค่าให้ตรงกับบิลจริงได้</p>
+   <div class="grid sm:grid-cols-2 gap-6">
+    <div>
+     <div class="grid grid-cols-2 gap-3">
+      <label class="lbl">ค่า Ft (บาท/หน่วย)<input class="field mono" type="number" step="0.0001" value="${S.ft}" data-in="ft"></label>
+      <label class="lbl">ค่าบริการ (บาท)<input class="field mono" type="number" step="0.01" value="${S.svc}" data-in="svc"></label>
+      <label class="lbl">VAT (%)<input class="field mono" type="number" step="0.5" value="${S.vat}" data-in="vat"></label>
+      <label class="lbl">เบรกเกอร์หลัก (A)<input class="field mono" type="number" step="5" value="${S.breaker}" data-in="breaker"></label>
+     </div>
+     <div class="rounded-2xl p-4 mt-4" style="${tone('pri')}">
+      <div class="text-xs opacity-80">ประมาณการสิ้นเดือน (<span class="num" data-b="projKwh">0</span> kWh)</div>
+      <div class="text-3xl font-medium num mt-1">฿ <span data-b="billProj2">0</span></div>
+      <div class="text-xs opacity-80 mt-1 num">ถึงวันนี้ ฿<span data-b="mtdBill">0</span> · เฉลี่ย <span data-b="effRate">0</span> บาท/หน่วย</div>
+     </div>
+     <label class="lbl mt-4">งบค่าไฟต่อเดือน (บาท)<input class="field mono" type="number" step="100" value="${S.budget}" data-in="budget"></label>
+     <div class="mt-3"><div class="flex items-center justify-between text-xs text-on2 mb-1"><span class="chip" id="budChip">–</span><span class="num"><span data-b="budPct">0</span>% ของงบ</span></div><div class="bar"><i data-bw="bud"></i></div></div>
+    </div>
+    <div class="overflow-x-auto"><table class="tbl num"><thead><tr><th>ช่วงหน่วย</th><th>หน่วย</th><th>บาท/หน่วย</th><th>บาท</th></tr></thead><tbody id="tierBody"></tbody></table></div>
+   </div>
+  </div>
+ </div>`;
+AFTER.energy=drawUsage;
+
+R.climate=()=>`${head('แอร์และอุณหภูมิ','ควบคุมแอร์และดูอุณหภูมิทุกห้อง')}
+ <div class="grid md:grid-cols-2 gap-4">${ROOMS.filter(r=>r.ac).map(r=>acCard(r.id)).join('')}</div>
+ <div class="card mt-4"><h3 class="font-medium">อุณหภูมิแต่ละห้อง 24 ชม.</h3><div class="relative h-60 mt-2"><canvas id="climChart" aria-label="กราฟอุณหภูมิทุกห้อง"></canvas></div></div>
+ <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">${ROOMS.map(r=>`<div class="card flex items-center gap-3"><div class="bulb" style="${tone(r.k)}">${ic(r.icon,'',true)}</div><div class="flex-1 min-w-0"><div class="font-medium truncate">${r.name}</div><div class="text-xs text-on2" data-b="st:${r.id}">–</div></div><div class="text-right num"><div class="text-xl font-medium"><span data-b="t:${r.id}">–</span>°C</div><div class="text-xs text-on2"><span data-b="h:${r.id}">–</span>%</div></div></div>`).join('')}</div>`;
+AFTER.climate=()=>{const t=hist.slice(-24);
+ mk('climChart',{type:'line',data:{labels:t.map(x=>new Date(x.t).getHours()+':00'),datasets:['bath','kitchen','bedroom','living'].map(id=>{const r=roomOf(id);return{label:r.name,data:t.map(x=>+(x.temp+(r.base-27)*.6).toFixed(1)),borderColor:cv(SER[id]),borderDash:DASH[id],tension:.35,pointRadius:0,pointHoverRadius:5,borderWidth:2}})},
+  options:{interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:10}}},scales:{x:{grid:{display:false},ticks:{maxTicksLimit:8,maxRotation:0}},y:{grid:gridC(),border:{display:false},title:{display:true,text:'°C'}}}}})};
+
+R.weather=()=>{const L=S.live.rain,ra=L.raining,hrs=rainHist.reduce((a,b)=>a+b,0);
+ return `${head('ฝนและสภาพอากาศ','เซนเซอร์ฝนที่ระเบียง')}
+ <div class="grid lg:grid-cols-3 gap-4">
+  <div class="card lg:col-span-2">
+   <div class="flex items-center gap-4"><div class="bulb" style="width:64px;height:64px;border-radius:20px;${ra?tone('pri'):tone('grn')}">${ic(ra?'rainy':'cloud','',true).replace('class="ms','style="font-size:36px" class="ms')}</div>
+    <div><div class="text-3xl font-medium">${ra?'ฝนกำลังตก':L.wet>25?'พื้นยังเปียก':'ไม่มีฝน'}</div><div class="text-sm text-on2">${ra?'ควรเก็บของที่ระเบียงและปิดหน้าต่าง':'ท้องฟ้าปลอดฝนตามเซนเซอร์'}</div></div></div>
+   <div class="mt-6"><div class="flex justify-between text-xs text-on2 mb-1"><span>ค่าความเปียกของเซนเซอร์</span><span class="num"><span data-b="wet">0</span>%</span></div><div class="bar"><i data-bw="wet"></i></div></div>
+   <div class="mt-6 text-xs text-on2 mb-2">ฝนตกใน 24 ชม. (1 ช่อง = 1 ชม.)</div>
+   <div class="grid gap-[3px]" style="grid-template-columns:repeat(24,1fr)">${rainHist.map(v=>`<div class="rain-cell ${v?'w':''}"></div>`).join('')}</div>
+   <div class="flex justify-between text-[11px] text-on2 mt-1 num"><span>-24 ชม.</span><span>-12 ชม.</span><span>ตอนนี้</span></div>
+  </div>
+  <div class="grid gap-4 content-start">
+   <div class="card"><div class="text-sm text-on2">ระเบียงตอนนี้</div><div class="text-4xl font-medium num mt-1"><span data-b="t:balcony">–</span><span class="text-xl text-on2">°C</span></div><div class="text-sm text-on2 num">ความชื้น <span data-b="h:balcony">–</span>%</div></div>
+   <div class="card"><div class="text-sm text-on2">ฝนตกรวม 24 ชม.</div><div class="text-4xl font-medium num mt-1">${hrs}<span class="text-xl text-on2"> ชม.</span></div><a href="#auto" class="btn btn-out mt-3">${ic('auto_awesome')}ตั้งแจ้งเตือนฝน</a></div>
+  </div>
+ </div>`};
+const rainHist=Array.from({length:24},(_,i)=>(i>=3&&i<=6)||i===15||i===16?1:0);
+
+R.auto=()=>`${head('ระบบอัตโนมัติ','ตั้งกฎให้บ้านทำงานเอง',`<button class="btn btn-tonal" data-act="addrule">${ic('add')}เพิ่มกฎ</button>`)}
+ <div class="grid md:grid-cols-2 gap-3">${S.rules.map(r=>`<div class="card flex items-center gap-3"><div class="bulb" style="${tone(r.k)}">${ic('auto_awesome','',true)}</div>
+  <div class="flex-1 min-w-0"><div class="text-xs text-on2">ถ้า</div><div class="text-sm font-medium">${esc(r.c)}</div><div class="text-xs text-on2 mt-1">ให้</div><div class="text-sm font-medium">${esc(r.a)}</div><button class="btn-text mt-1" data-act="delrule" data-id="${r.id}" style="padding-left:0">ลบกฎ</button></div>
+  <button class="sw" role="switch" aria-checked="${r.on}" aria-label="เปิดใช้กฎ" data-act="rule" data-id="${r.id}"></button></div>`).join('')}</div>
+ ${S.rules.length?'':'<div class="card text-center text-on2 py-8">ยังไม่มีกฎ กด “เพิ่มกฎ” เพื่อเริ่มต้น</div>'}`;
+
+const DEVICES=[
+ {n:'ตู้เบรกเกอร์',d:'PZEM-004T วัดไฟรวม',rssi:-52,seen:'เมื่อสักครู่',k:'pri',i:'bolt'},
+ {n:'ห้องนอน',d:'DHT22 · รีเลย์ไฟ 2 ช่อง',rssi:-61,seen:'เมื่อสักครู่',k:'pur',i:'bed'},
+ {n:'ห้องน้ำ',d:'DHT22 · รีเลย์ไฟ',rssi:-70,seen:'เมื่อสักครู่',k:'pri',i:'bathtub'},
+ {n:'ห้องนั่งเล่น',d:'DHT22 · PIR · IR แอร์',rssi:-58,seen:'เมื่อสักครู่',k:'pnk',i:'weekend'},
+ {n:'ห้องครัว',d:'DHT22 · รีเลย์ไฟ',rssi:-66,seen:'เมื่อสักครู่',k:'grn',i:'kitchen'},
+ {n:'ระเบียง',d:'เซนเซอร์ฝน · DHT22',rssi:-78,seen:'2 วินาทีที่แล้ว',k:'pri',i:'deck'}];
+R.devices=()=>`${head('อุปกรณ์และตั้งค่า',`${DEVICES.length} อุปกรณ์ออนไลน์`)}
+ <div class="grid md:grid-cols-2 gap-3">${DEVICES.map(d=>{const q=d.rssi>-65?['grn','ongrn','สัญญาณดี']:d.rssi>-75?['pri','onpri','สัญญาณพอใช้']:['warnc','warn','สัญญาณอ่อน'];
+  return `<div class="card flex items-center gap-3"><div class="bulb" style="${tone(d.k)}">${ic(d.i,'',true)}</div><div class="flex-1 min-w-0"><div class="font-medium truncate">ESP32 · ${d.n}</div><div class="text-xs text-on2 truncate">${d.d}</div><div class="text-xs text-on2 num mt-0.5">${d.rssi} dBm · ${d.seen}</div></div><span class="chip" style="${q[0]==='warnc'?'background:var(--warnc);color:var(--warn)':q[0]==='grn'?tone('grn'):tone('pri')}">${ic('wifi','').replace('class="ms','style="font-size:16px" class="ms')}${q[2]}</span></div>`}).join('')}</div>
+ <div class="grid md:grid-cols-2 gap-4 mt-6">
+  <div class="card"><h3 class="font-medium mb-3">การเชื่อมต่อ</h3>
+   <label class="lbl">MQTT broker (WebSocket)<input class="field mono" id="mq-url" value="${esc(S.mqtt.url)}"></label>
+   <label class="lbl mt-3">Topic prefix<input class="field mono" id="mq-pre" value="${esc(S.mqtt.prefix)}"></label>
+   <button class="btn btn-fill mt-4" data-act="savemq">บันทึก</button>
+   <p class="text-xs text-on2 mt-3">หน้านี้ใช้ข้อมูลจำลอง ต่อกับอุปกรณ์จริงโดยแก้ <span class="font-mono">Api</span> ในสคริปต์</p></div>
+  <div class="card"><h3 class="font-medium mb-3">ธีม</h3>
+   <div class="seg" role="group" aria-label="ธีม">${[['auto','ตามระบบ'],['light','สว่าง'],['dark','มืด']].map(x=>`<button data-act="theme" data-v="${x[0]}" class="${themePref()===x[0]?'on':''}">${x[1]}</button>`).join('')}</div>
+   <div class="flex gap-2 mt-5" aria-hidden="true"><i class="w-10 h-10 rounded-xl" style="background:var(--pri)"></i><i class="w-10 h-10 rounded-xl" style="background:var(--grn)"></i><i class="w-10 h-10 rounded-xl" style="background:var(--pnk)"></i><i class="w-10 h-10 rounded-xl" style="background:var(--pur)"></i></div>
+   <p class="text-xs text-on2 mt-3">ฟ้าเป็นสีหลัก เขียว ชมพู ม่วงใช้แยกห้องและกราฟ</p></div>
+ </div>`;
+
+R.more=()=>`${head('เพิ่มเติม')}<div class="grid grid-cols-2 gap-3">${MORE.map((m,i)=>`<a href="#${m[0]}" class="card flex flex-col gap-3"><div class="bulb" style="${tone(['pri','grn','pnk','pur'][i])}">${ic(m[2],'',true)}</div><div class="font-medium">${m[1]}</div></a>`).join('')}</div>`;
+
+/* ============ nav / router ============ */
+const NAV=[['home','ภาพรวม','home'],['rooms','ห้อง','grid_view'],['lights','ไฟ','lightbulb'],['energy','ไฟฟ้า','bolt']];
+const MORE=[['climate','แอร์และอุณหภูมิ','ac_unit'],['weather','ฝนและสภาพอากาศ','rainy'],['auto','ระบบอัตโนมัติ','auto_awesome'],['devices','อุปกรณ์และตั้งค่า','memory']];
+function buildNav(){
+ const bk=p=>p==='room'?'rooms':['climate','weather','auto','devices','more'].includes(p)?'more':p;
+ $('#botNav').innerHTML=[...NAV,['more','เพิ่มเติม','more_horiz']].map(n=>`<a href="#${n[0]}" class="bn ${bk(S.page)===n[0]?'on':''}" ${bk(S.page)===n[0]?'aria-current="page"':''}><span class="pill">${ic(n[2],'',bk(S.page)===n[0])}</span>${n[1]}</a>`).join('');
+ const rk=p=>p==='room'?'rooms':p;
+ $('#railNav').innerHTML=[...NAV,...MORE].map(n=>`<a href="#${n[0]}" class="rn ${rk(S.page)===n[0]?'on':''}">${ic(n[2],'',rk(S.page)===n[0])}${n[1]}</a>`).join('')}
+function render(scroll){
+ killCharts();
+ const h=(location.hash||'#home').slice(1);let page=h,arg=null;
+ if(h.startsWith('room-')){page='room';arg=h.slice(5);if(!roomOf(arg))page='rooms'}
+ if(!R[page])page='home';
+ S.page=page;S.arg=arg;
+ $('#view').innerHTML=R[page](arg);
+ $('#pageTitle').textContent=page==='room'?roomOf(arg).name:TITLE[page];
+ buildNav();tickUI();fillBill();if(AFTER[page])AFTER[page](arg);
+ if(scroll)window.scrollTo(0,0)}
+addEventListener('hashchange',()=>render(true));
+
+/* ============ theme ============ */
+function themePref(){try{return localStorage.getItem('sh-theme')||'auto'}catch(e){return'auto'}}
+function applyTheme(v){const r=document.documentElement;if(v==='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',v);try{localStorage.setItem('sh-theme',v)}catch(e){}
+ const dark=v==='dark'||(v==='auto'&&matchMedia('(prefers-color-scheme:dark)').matches);$('#themeIco').textContent=dark?'light_mode':'dark_mode'}
+applyTheme(themePref());
+matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>{if(themePref()==='auto'){applyTheme('auto');render(false)}});
+$('#themeBtn').onclick=()=>{const dark=document.documentElement.getAttribute('data-theme')==='dark'||(!document.documentElement.getAttribute('data-theme')&&matchMedia('(prefers-color-scheme:dark)').matches);applyTheme(dark?'light':'dark');render(false)};
+
+/* ============ sheets ============ */
+function openSheet(html){$('#sheetBody').innerHTML=html;$('#sheet').hidden=false;const i=$('#sheetBody input,#sheetBody select');i&&i.focus()}
+function closeSheet(){$('#sheet').hidden=true}
+let newType='dim';
+function addLightSheet(room){newType='dim';
+ openSheet(`<h2 class="text-lg font-medium mb-4">เพิ่มหลอดไฟ</h2>
+ <label class="lbl">ชื่อหลอดไฟ<input class="field" id="nl-name" placeholder="เช่น ไฟข้างโต๊ะ" maxlength="40"></label>
+ <label class="lbl mt-3">ห้อง<select class="field" id="nl-room">${ROOMS.map(r=>`<option value="${r.id}" ${r.id===room?'selected':''}>${r.name}</option>`).join('')}</select></label>
+ <div class="mt-3 text-xs text-on2 mb-1">ชนิดหลอด</div>
+ <div class="seg" id="nl-type">${Object.entries(TYPES).map(([k,v])=>`<button data-act="nltype" data-t="${k}" class="${k===newType?'on':''}">${v}</button>`).join('')}</div>
+ <label class="lbl mt-3">รหัสอุปกรณ์ / MQTT topic<input class="field mono" id="nl-dev" placeholder="${esc(S.mqtt.prefix)}/ห้อง/light3"></label>
+ <p class="text-xs mt-3" id="nl-err" style="color:var(--err)" hidden></p>
+ <div class="flex gap-2 mt-5"><button class="btn btn-out flex-1" data-act="closesheet">ยกเลิก</button><button class="btn btn-fill flex-1" data-act="nlsave">บันทึก</button></div>`)}
+function addRuleSheet(){openSheet(`<h2 class="text-lg font-medium mb-4">เพิ่มกฎอัตโนมัติ</h2>
+ <label class="lbl">ถ้า<select class="field" id="nr-c">${COND.map(c=>`<option>${c}</option>`).join('')}</select></label>
+ <label class="lbl mt-3">ให้<select class="field" id="nr-a">${ACT.map(c=>`<option>${c}</option>`).join('')}</select></label>
+ <div class="flex gap-2 mt-5"><button class="btn btn-out flex-1" data-act="closesheet">ยกเลิก</button><button class="btn btn-fill flex-1" data-act="nrsave">บันทึก</button></div>`)}
+
+/* ============ actions ============ */
+const sendL=l=>Api.send({type:'light',dev:l.dev,on:l.on,bri:l.bri,col:l.col});
+const sendA=id=>Api.send({type:'ac',room:id,...S.ac[id]});
+const swap=(id,html)=>{const e=$('#'+id);if(e)e.outerHTML=html};
+function applyScene(id){
+ if(id==='away'){S.lights.forEach(l=>l.on=false);Object.values(S.ac).forEach(a=>a.on=false)}
+ if(id==='sleep'){S.lights.forEach(l=>l.on=false);const b=S.lights.find(l=>l.room==='bedroom'&&l.type!=='onoff');if(b){b.on=true;b.bri=10}S.ac.bedroom.on=true;S.ac.bedroom.set=25}
+ if(id==='movie'){S.lights.forEach(l=>l.on=false);S.lights.filter(l=>l.room==='living'&&l.type!=='onoff').forEach(l=>{l.on=true;l.bri=20})}
+ if(id==='all'){S.lights.forEach(l=>l.on=true)}
+ S.lights.forEach(sendL);Object.keys(S.ac).forEach(sendA);save()}
+async function exportData(fmt){
+ const s=series(S.range),rows=s.vals.map((v,i)=>({time:new Date(s.times[i]).toISOString(),label:s.labels[i],kwh:v,est_cost_thb:+(v*avgRate).toFixed(2)}));
+ const name=`power-${S.range}-${new Date().toISOString().slice(0,10)}.${fmt}`;
+ const data=fmt==='csv'?'﻿'+'time,label,kwh,est_cost_thb\n'+rows.map(r=>`${r.time},${r.label},${r.kwh},${r.est_cost_thb}`).join('\n'):JSON.stringify(rows,null,2);
+ let dl=null;try{dl=window.claude&&window.claude.use?await window.claude.use('downloads'):null}catch(e){}
+ if(dl){try{await dl.save({filename:name,data});toast('ส่งออกแล้ว '+name)}catch(e){if(!e||e.code!=='declined')toast('ส่งออกไม่สำเร็จ')}return}
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'text/plain'}));a.download=name;document.body.appendChild(a);a.click();a.remove();toast('ส่งออกแล้ว '+name)}
+
+document.addEventListener('click',e=>{
+ if(e.target.id==='sheet'){closeSheet();return}
+ const b=e.target.closest('[data-act]');if(!b)return;
+ const a=b.dataset.act,id=b.dataset.id,l=S.lights.find(x=>x.id===id);
+ if(a==='lt'&&l){l.on=!l.on;sendL(l);save();swap('lc-'+id,lightCard(l));tickUI()}
+ else if(a==='col'&&l){l.col=+b.dataset.i;sendL(l);save();swap('lc-'+id,lightCard(l))}
+ else if(a==='del'&&l){if(b.dataset.armed){S.lights=S.lights.filter(x=>x.id!==id);save();render(false);toast('ลบ '+l.name+' แล้ว')}
+  else{b.dataset.armed='1';b.textContent='แตะอีกครั้งเพื่อลบ';b.style.color='var(--err)';setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent='ลบ';b.style.color=''}},3000)}}
+ else if(a==='alloff'){S.lights.forEach(x=>x.on=false);S.lights.forEach(sendL);save();render(false);toast('ปิดไฟทั้งหมดแล้ว')}
+ else if(a==='scene'){applyScene(id);render(false);toast('ใช้ฉาก “'+SCENES.find(s=>s.id===id).n+'”')}
+ else if(a==='acp'){S.ac[id].on=!S.ac[id].on;sendA(id);save();swap('ac-'+id,acCard(id));tickUI()}
+ else if(a==='act'){const x=S.ac[id];x.set=Math.max(16,Math.min(30,x.set+ +b.dataset.d));sendA(id);save();swap('ac-'+id,acCard(id));tickUI()}
+ else if(a==='mode'){S.ac[id].mode=b.dataset.m;sendA(id);save();swap('ac-'+id,acCard(id));tickUI()}
+ else if(a==='fan'){S.ac[id].fan=+b.dataset.f;sendA(id);save();swap('ac-'+id,acCard(id));tickUI()}
+ else if(a==='range'){S.range=b.dataset.r;$$('#rangeSeg button').forEach(x=>x.classList.toggle('on',x===b));drawUsage()}
+ else if(a==='export')exportData(b.dataset.fmt);
+ else if(a==='addlight')addLightSheet(b.dataset.room);
+ else if(a==='nltype'){newType=b.dataset.t;$$('#nl-type button').forEach(x=>x.classList.toggle('on',x===b))}
+ else if(a==='nlsave'){const n=$('#nl-name').value.trim(),room=$('#nl-room').value,err=$('#nl-err');
+  if(!n){err.textContent='ใส่ชื่อหลอดไฟก่อน';err.hidden=false;$('#nl-name').focus();return}
+  const cnt=S.lights.filter(x=>x.room===room).length+1,nl={id:'l'+Date.now().toString(36),name:n,room,type:newType,on:true,bri:70,col:0,dev:$('#nl-dev').value.trim()||`${S.mqtt.prefix}/${room}/light${cnt}`};
+  S.lights.push(nl);sendL(nl);save();closeSheet();render(false);toast('เพิ่ม '+n+' แล้ว')}
+ else if(a==='closesheet')closeSheet();
+ else if(a==='rule'){const r=S.rules.find(x=>x.id===id);r.on=!r.on;save();b.setAttribute('aria-checked',r.on)}
+ else if(a==='delrule'){S.rules=S.rules.filter(x=>x.id!==id);save();render(false)}
+ else if(a==='addrule')addRuleSheet();
+ else if(a==='nrsave'){S.rules.push({id:'r'+Date.now().toString(36),c:$('#nr-c').value,a:$('#nr-a').value,on:true,k:['pri','grn','pnk','pur'][S.rules.length%4]});save();closeSheet();render(false);toast('เพิ่มกฎแล้ว')}
+ else if(a==='savemq'){S.mqtt={url:$('#mq-url').value.trim(),prefix:$('#mq-pre').value.trim()||'home'};save();toast('บันทึกการเชื่อมต่อแล้ว')}
+ else if(a==='theme'){applyTheme(b.dataset.v);render(false)}
+});
+document.addEventListener('input',e=>{const t=e.target,a=t.dataset.act;
+ if(a==='bri'){const l=S.lights.find(x=>x.id===t.dataset.id);l.bri=+t.value;t.style.setProperty('--p',t.value+'%');const s=$(`[data-bri="${l.id}"]`);if(s)s.textContent=t.value+'%'}
+ else if(a==='acr'){const x=S.ac[t.dataset.id];x.set=+t.value;t.style.setProperty('--p',(t.value-16)/14*100+'%');const c=t.closest('.card'),big=c.querySelector('.text-5xl');if(big)big.firstChild.textContent=t.value}
+ else if(t.dataset.in){const v=parseFloat(t.value);if(isFinite(v)){S[t.dataset.in]=v;save();fillBill();if(t.dataset.in==='breaker')tickUI()}}});
+document.addEventListener('change',e=>{const t=e.target,a=t.dataset.act;
+ if(a==='bri'){const l=S.lights.find(x=>x.id===t.dataset.id);sendL(l);save()}
+ else if(a==='acr'){sendA(t.dataset.id);save()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#sheet').hidden)closeSheet()});
+
+/* ============ boot ============ */
+function onData(d){const flip=d.rain.raining!==S.live.rain.raining;S.live=d;
+ if(flip&&['home','weather'].includes(S.page)&&$('#sheet').hidden)render(false);else tickUI()}
+render(true);
 Api.subscribe(onData);
 </script>
-</body>
-</html>
+
+</body></html>
